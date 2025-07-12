@@ -1,168 +1,290 @@
-var content=function(){"use strict";var H=Object.defineProperty;var V=(h,u,r)=>u in h?H(h,u,{enumerable:!0,configurable:!0,writable:!0,value:r}):h[u]=r;var p=(h,u,r)=>V(h,typeof u!="symbol"?u+"":u,r);var I,T;function h(t){return t}const r=(T=(I=globalThis.browser)==null?void 0:I.runtime)!=null&&T.id?globalThis.browser:globalThis.chrome,N={matches:["<all_urls>"],main(){console.log("StickyNoteAI: Initializing..."),M(),setTimeout(()=>{D(),S()},100)}};function M(){if(document.getElementById("sticky-note-widget"))return;const t=document.createElement("div");t.id="sticky-note-widget",t.innerHTML=`
-    <div class="widget-header">
-      <span class="widget-icon">📝</span>
-      <button class="btn-add" title="Add Note">+</button>
-      <button class="btn-menu" title="Menu">≡</button>
-      <button class="btn-hide" title="Hide">×</button>
+var content=function(){"use strict";var j=Object.defineProperty;var V=(b,g,a)=>g in b?j(b,g,{enumerable:!0,configurable:!0,writable:!0,value:a}):b[g]=a;var m=(b,g,a)=>V(b,typeof g!="symbol"?g+"":g,a);var z,T;function b(t){return t}const a=(T=(z=globalThis.browser)==null?void 0:z.runtime)!=null&&T.id?globalThis.browser:globalThis.chrome,M={matches:["<all_urls>"],main(){console.log("StickyNoteAI: Initializing..."),document.readyState==="loading"?document.addEventListener("DOMContentLoaded",()=>{I()}):I()}};function I(){console.log("StickyNoteAI: DOM ready, creating widget..."),console.log("StickyNoteAI: Content script is running on:",window.location.href),E(),setTimeout(()=>{P(),N()},100),a.runtime.onMessage.addListener((t,e,o)=>{if(console.log("StickyNoteAI: Received message:",t),t.action==="toggle-widget"){const n=document.getElementById("sticky-note-widget");n&&(n.style.display=n.style.display==="none"?"block":"none",console.log("StickyNoteAI: Widget toggled via command"))}else t.action==="new-note"&&(w(),console.log("StickyNoteAI: Note editor opened via command"));o({success:!0})})}function E(){if(console.log("StickyNoteAI: Creating floating widget..."),document.getElementById("sticky-note-widget")){console.log("StickyNoteAI: Widget already exists");return}if(!document.body){console.log("StickyNoteAI: document.body not available, retrying..."),setTimeout(()=>E(),100);return}const t=document.createElement("div");t.id="sticky-note-widget",t.style.cssText=`
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    width: 280px !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+    z-index: 999999 !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    font-size: 14px !important;
+    cursor: move !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    overflow: hidden !important;
+  `,t.innerHTML=`
+    <div class="widget-header" style="
+      display: flex; 
+      align-items: center; 
+      padding: 16px 20px; 
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1)); 
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
+      gap: 12px;
+      backdrop-filter: blur(10px);
+    ">
+      <span class="widget-icon" style="font-size: 18px; flex: 1; color: #6366f1; filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.3));">✨</span>
+      <button class="btn-add" title="Add Note" style="
+        background: linear-gradient(135deg, #10b981, #059669); 
+        border: none; 
+        padding: 8px 12px; 
+        border-radius: 8px; 
+        cursor: pointer; 
+        font-size: 12px; 
+        font-weight: 600; 
+        color: white;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        transition: all 0.2s ease;
+      ">+ Add</button>
+      <button class="btn-menu" title="Menu" style="
+        background: rgba(255, 255, 255, 0.1); 
+        border: 1px solid rgba(255, 255, 255, 0.2); 
+        padding: 8px; 
+        border-radius: 8px; 
+        cursor: pointer; 
+        font-size: 14px; 
+        font-weight: bold; 
+        color: #64748b;
+        transition: all 0.2s ease;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      ">≡</button>
+      <button class="btn-hide" title="Hide" style="
+        background: rgba(255, 255, 255, 0.1); 
+        border: 1px solid rgba(255, 255, 255, 0.2); 
+        padding: 8px; 
+        border-radius: 8px; 
+        cursor: pointer; 
+        font-size: 14px; 
+        font-weight: bold; 
+        color: #ef4444;
+        transition: all 0.2s ease;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      ">×</button>
     </div>
-    <div class="widget-body" style="display: none;">
-      <div class="notes-list">
-        <div class="no-notes">No notes yet. Click + to add one!</div>
+    <div class="widget-body" style="
+      display: none; 
+      padding: 20px; 
+      max-height: 400px; 
+      overflow-y: auto;
+      background: rgba(255, 255, 255, 0.05);
+    ">
+      <div class="notes-list" style="display: flex; flex-direction: column; gap: 12px;">
+        <div class="no-notes" style="
+          color: #64748b; 
+          font-style: italic; 
+          text-align: center; 
+          padding: 32px 16px;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 12px;
+          border: 1px dashed rgba(255, 255, 255, 0.2);
+        ">
+          <div style="font-size: 24px; margin-bottom: 8px;">📝</div>
+          <div style="font-size: 13px; color: #94a3b8;">No notes yet</div>
+          <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Click + Add to create your first note</div>
+        </div>
       </div>
     </div>
-  `,C(),z(t),q(t),document.body.appendChild(t),console.log("StickyNoteAI: Widget created successfully")}function C(){if(document.getElementById("sticky-note-styles"))return;const t=document.createElement("style");t.id="sticky-note-styles",t.textContent=`
+  `,A(),C(t),B(t),document.body.appendChild(t),console.log("StickyNoteAI: Widget created successfully and added to DOM"),t.style.display="block",t.style.visibility="visible";const e=document.getElementById("sticky-note-widget");e?(console.log("StickyNoteAI: Widget verification successful"),console.log("Widget position:",e.style.top,e.style.right)):console.error("StickyNoteAI: Widget verification failed!")}function A(){if(document.getElementById("sticky-note-styles"))return;const t=document.createElement("style");t.id="sticky-note-styles",t.textContent=`
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+    
     #sticky-note-widget {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      width: 200px;
-      background: rgba(255, 255, 255, 0.95);
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      z-index: 999999;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 14px;
-      backdrop-filter: blur(10px);
-      cursor: move;
-      transition: all 0.2s ease;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
     }
 
     #sticky-note-widget:hover {
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+      transform: translateY(-2px) !important;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15) !important;
     }
 
-    .widget-header {
-      display: flex;
-      align-items: center;
-      padding: 8px 12px;
-      background: rgba(248, 249, 250, 0.9);
-      border-radius: 8px 8px 0 0;
-      border-bottom: 1px solid #eee;
-      gap: 8px;
+    #sticky-note-widget .btn-add:hover {
+      background: linear-gradient(135deg, #059669, #047857) !important;
+      transform: translateY(-1px) !important;
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4) !important;
     }
 
-    .widget-icon {
-      font-size: 16px;
-      flex: 1;
+    #sticky-note-widget .btn-menu:hover,
+    #sticky-note-widget .btn-hide:hover {
+      background: rgba(255, 255, 255, 0.2) !important;
+      transform: translateY(-1px) !important;
     }
 
-    .widget-header button {
-      background: none;
-      border: none;
-      padding: 4px 8px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: bold;
-      transition: background-color 0.2s ease;
+    #sticky-note-widget .note-item {
+      background: rgba(255, 255, 255, 0.1) !important;
+      backdrop-filter: blur(10px) !important;
+      padding: 16px !important;
+      border-radius: 12px !important;
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      cursor: pointer !important;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      position: relative !important;
+      overflow: hidden !important;
     }
 
-    .widget-header button:hover {
-      background: rgba(0, 0, 0, 0.1);
+    #sticky-note-widget .note-item:before {
+      content: '' !important;
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      height: 3px !important;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899) !important;
+      opacity: 0 !important;
+      transition: opacity 0.3s ease !important;
     }
 
-    .btn-add {
-      color: #28a745;
+    #sticky-note-widget .note-item:hover {
+      background: rgba(255, 255, 255, 0.15) !important;
+      transform: translateY(-2px) scale(1.02) !important;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
     }
 
-    .btn-menu {
-      color: #6c757d;
+    #sticky-note-widget .note-item:hover:before {
+      opacity: 1 !important;
     }
 
-    .btn-hide {
-      color: #dc3545;
+    #sticky-note-widget .note-title {
+      font-weight: 600 !important;
+      margin-bottom: 8px !important;
+      color: #1e293b !important;
+      font-size: 14px !important;
+      line-height: 1.4 !important;
     }
 
-    .widget-body {
-      padding: 12px;
-      max-height: 300px;
-      overflow-y: auto;
+    #sticky-note-widget .note-preview {
+      color: #64748b !important;
+      font-size: 12px !important;
+      line-height: 1.5 !important;
+      overflow: hidden !important;
+      display: -webkit-box !important;
+      -webkit-line-clamp: 2 !important;
+      -webkit-box-orient: vertical !important;
     }
 
-    .notes-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+    #sticky-note-widget .note-meta {
+      margin-top: 8px !important;
+      font-size: 10px !important;
+      color: #94a3b8 !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 4px !important;
     }
 
-    .no-notes {
-      color: #6c757d;
-      font-style: italic;
-      text-align: center;
-      padding: 20px 10px;
+    #sticky-note-widget .note-meta:before {
+      content: '📅' !important;
+      font-size: 8px !important;
     }
 
-    .note-item {
-      background: #f8f9fa;
-      padding: 8px 12px;
-      border-radius: 6px;
-      border-left: 3px solid #007bff;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .note-item:hover {
-      background: #e9ecef;
-      transform: translateY(-1px);
-    }
-
-    .note-title {
-      font-weight: 600;
-      margin-bottom: 4px;
-      color: #333;
-    }
-
-    .note-preview {
-      color: #6c757d;
-      font-size: 12px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    /* Hide widget when in stealth mode */
+    /* Stealth mode - ultra minimal */
     #sticky-note-widget.stealth {
-      opacity: 0.3;
-      transform: scale(0.8);
+      opacity: 0.1 !important;
+      transform: scale(0.85) !important;
+      transition: all 0.3s ease !important;
     }
 
+    #sticky-note-widget.stealth:hover {
+      opacity: 0.9 !important;
+      transform: scale(1) translateY(-2px) !important;
+    }
+
+    /* Minimized state */
     #sticky-note-widget.minimized {
-      width: 60px;
-      height: 40px;
-    }
-
-    #sticky-note-widget.minimized .widget-body {
-      display: none !important;
+      width: 64px !important;
+      height: 64px !important;
+      border-radius: 50% !important;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.9), rgba(168, 85, 247, 0.9)) !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
     }
 
     #sticky-note-widget.minimized .widget-header {
-      padding: 8px;
-      justify-content: center;
+      border: none !important;
+      background: none !important;
+      padding: 0 !important;
+      justify-content: center !important;
     }
 
-    #sticky-note-widget.minimized .btn-menu,
-    #sticky-note-widget.minimized .btn-add {
-      display: none;
+    #sticky-note-widget.minimized .widget-icon {
+      font-size: 24px !important;
+      color: white !important;
+      filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)) !important;
     }
-  `,document.head.appendChild(t)}function z(t){let e=!1,n=0,i=0,o=0,s=0;const a=t.querySelector(".widget-header");a.addEventListener("mousedown",g),document.addEventListener("mousemove",d),document.addEventListener("mouseup",c);function g(l){l.target.tagName!=="BUTTON"&&(o=l.clientX-n,s=l.clientY-i,(l.target===a||a.contains(l.target))&&(e=!0,t.style.cursor="grabbing"))}function d(l){if(e){l.preventDefault(),n=l.clientX-o,i=l.clientY-s;const L=t.getBoundingClientRect(),W=window.innerWidth-L.width,Y=window.innerHeight-L.height;n=Math.max(0,Math.min(n,W)),i=Math.max(0,Math.min(i,Y)),t.style.left=n+"px",t.style.top=i+"px",t.style.right="auto"}}function c(){e=!1,t.style.cursor="move",F(n,i)}}function q(t){const e=t.querySelector(".btn-add"),n=t.querySelector(".btn-menu"),i=t.querySelector(".btn-hide"),o=t.querySelector(".widget-body");e.addEventListener("click",s=>{s.stopPropagation(),E()}),n.addEventListener("click",s=>{s.stopPropagation();const a=o.style.display!=="none";o.style.display=a?"none":"block",n.textContent=a?"≡":"×"}),i.addEventListener("click",s=>{s.stopPropagation(),t.classList.toggle("minimized")}),t.addEventListener("dblclick",()=>{t.classList.toggle("minimized")}),document.addEventListener("keydown",s=>{s.ctrlKey&&s.shiftKey&&s.key==="H"&&(s.preventDefault(),t.style.display=t.style.display==="none"?"block":"none"),s.ctrlKey&&s.shiftKey&&s.key==="N"&&(s.preventDefault(),E())})}function E(){if(document.getElementById("note-editor-modal"))return;const t=document.createElement("div");t.id="note-editor-modal",t.innerHTML=`
+
+    #sticky-note-widget.minimized .widget-body,
+    #sticky-note-widget.minimized .btn-menu,
+    #sticky-note-widget.minimized .btn-add,
+    #sticky-note-widget.minimized .btn-hide {
+      display: none !important;
+    }
+
+    /* Animations */
+    @keyframes noteSlideIn {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    #sticky-note-widget .note-item {
+      animation: noteSlideIn 0.3s ease-out !important;
+    }
+
+    /* Scrollbar styling */
+    #sticky-note-widget .widget-body::-webkit-scrollbar {
+      width: 4px !important;
+    }
+
+    #sticky-note-widget .widget-body::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1) !important;
+      border-radius: 2px !important;
+    }
+
+    #sticky-note-widget .widget-body::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3) !important;
+      border-radius: 2px !important;
+    }
+
+    #sticky-note-widget .widget-body::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.5) !important;
+    }
+  `,document.head.appendChild(t)}function C(t){let e=!1,o=0,n=0,i=0,r=0;const s=t.querySelector(".widget-header");s.addEventListener("mousedown",c),document.addEventListener("mousemove",d),document.addEventListener("mouseup",l);function c(p){p.target.tagName!=="BUTTON"&&(i=p.clientX-o,r=p.clientY-n,(p.target===s||s.contains(p.target))&&(e=!0,t.style.cursor="grabbing"))}function d(p){if(e){p.preventDefault(),o=p.clientX-i,n=p.clientY-r;const L=t.getBoundingClientRect(),$=window.innerWidth-L.width,O=window.innerHeight-L.height;o=Math.max(0,Math.min(o,$)),n=Math.max(0,Math.min(n,O)),t.style.left=o+"px",t.style.top=n+"px",t.style.right="auto"}}function l(){e=!1,t.style.cursor="move",W(o,n)}}function B(t){const e=t.querySelector(".btn-add"),o=t.querySelector(".btn-menu"),n=t.querySelector(".btn-hide"),i=t.querySelector(".widget-body");e.addEventListener("click",r=>{r.stopPropagation(),w()}),o.addEventListener("click",r=>{r.stopPropagation();const s=i.style.display!=="none";i.style.display=s?"none":"block",o.textContent=s?"≡":"×"}),n.addEventListener("click",r=>{r.stopPropagation(),t.classList.toggle("minimized")}),t.addEventListener("dblclick",()=>{t.classList.toggle("minimized")}),document.addEventListener("keydown",r=>{const c=navigator.platform.toUpperCase().indexOf("MAC")>=0?r.metaKey:r.ctrlKey;c&&r.shiftKey&&r.key==="W"&&(r.preventDefault(),t.style.display=t.style.display==="none"?"block":"none"),c&&r.shiftKey&&r.key==="S"&&(r.preventDefault(),w())})}function w(){if(document.getElementById("note-editor-modal"))return;const t=document.createElement("div");t.id="note-editor-modal",t.innerHTML=`
     <div class="modal-backdrop">
       <div class="modal-content">
         <div class="modal-header">
-          <h3>Quick Note</h3>
+          <h3>Create Note</h3>
+          <div class="auto-save-indicator">Draft saved</div>
           <button class="modal-close">×</button>
         </div>
         <div class="modal-body">
-          <input type="text" placeholder="Note title..." class="note-title-input">
-          <textarea placeholder="Start typing your note..." class="note-content-input"></textarea>
+          <input type="text" placeholder="Give your note a title..." class="note-title-input">
+          <textarea placeholder="Start writing your thoughts here...
+
+💡 Tips:
+• Use markdown for formatting
+• Notes auto-save as you type
+• Press Esc to close quickly" class="note-content-input"></textarea>
           <div class="modal-actions">
-            <button class="btn-save">Save Note</button>
             <button class="btn-cancel">Cancel</button>
+            <button class="btn-save">Save Note</button>
           </div>
         </div>
       </div>
     </div>
-  `,A(),B(t),document.body.appendChild(t),t.querySelector(".note-title-input").focus()}function A(){if(document.getElementById("note-modal-styles"))return;const t=document.createElement("style");t.id="note-modal-styles",t.textContent=`
+  `,F(),q(t),document.body.appendChild(t),t.querySelector(".note-title-input").focus()}function F(){if(document.getElementById("note-modal-styles"))return;const t=document.createElement("style");t.id="note-modal-styles",t.textContent=`
     #note-editor-modal {
       position: fixed;
       top: 0;
@@ -170,31 +292,57 @@ var content=function(){"use strict";var H=Object.defineProperty;var V=(h,u,r)=>u
       width: 100%;
       height: 100%;
       z-index: 9999999;
+      animation: modalFadeIn 0.3s ease-out;
+    }
+
+    @keyframes modalFadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes modalSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
     }
 
     .modal-backdrop {
-      background: rgba(0, 0, 0, 0.5);
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
       width: 100%;
       height: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 20px;
     }
 
     .modal-content {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-      width: 90%;
-      max-width: 500px;
-      max-height: 80vh;
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9));
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 20px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
       overflow: hidden;
+      animation: modalSlideIn 0.3s ease-out;
     }
 
     .modal-header {
-      background: #f8f9fa;
-      padding: 16px 20px;
-      border-bottom: 1px solid #dee2e6;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1));
+      padding: 24px 28px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -202,53 +350,99 @@ var content=function(){"use strict";var H=Object.defineProperty;var V=(h,u,r)=>u
 
     .modal-header h3 {
       margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .modal-header h3:before {
+      content: '✨';
       font-size: 18px;
-      color: #333;
+      filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.3));
     }
 
     .modal-close {
-      background: none;
-      border: none;
-      font-size: 24px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      font-size: 20px;
       cursor: pointer;
-      color: #6c757d;
+      color: #64748b;
       padding: 0;
-      width: 30px;
-      height: 30px;
+      width: 40px;
+      height: 40px;
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 50%;
+      border-radius: 12px;
+      transition: all 0.2s ease;
     }
 
     .modal-close:hover {
-      background: rgba(0, 0, 0, 0.1);
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.3);
+      color: #ef4444;
+      transform: scale(1.05);
     }
 
     .modal-body {
-      padding: 20px;
+      padding: 28px;
     }
 
     .note-title-input {
       width: 100%;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
+      padding: 16px 20px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
       font-size: 16px;
-      margin-bottom: 12px;
-      font-family: inherit;
+      font-weight: 500;
+      margin-bottom: 16px;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(10px);
+      color: #1e293b;
+      transition: all 0.2s ease;
+      outline: none;
+    }
+
+    .note-title-input:focus {
+      border-color: rgba(99, 102, 241, 0.5);
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+      background: rgba(255, 255, 255, 0.8);
+    }
+
+    .note-title-input::placeholder {
+      color: #94a3b8;
     }
 
     .note-content-input {
       width: 100%;
-      min-height: 150px;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
+      min-height: 180px;
+      padding: 20px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
       font-size: 14px;
-      font-family: inherit;
+      line-height: 1.6;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(10px);
+      color: #1e293b;
       resize: vertical;
-      margin-bottom: 16px;
+      margin-bottom: 24px;
+      transition: all 0.2s ease;
+      outline: none;
+    }
+
+    .note-content-input:focus {
+      border-color: rgba(99, 102, 241, 0.5);
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+      background: rgba(255, 255, 255, 0.8);
+    }
+
+    .note-content-input::placeholder {
+      color: #94a3b8;
     }
 
     .modal-actions {
@@ -258,36 +452,85 @@ var content=function(){"use strict";var H=Object.defineProperty;var V=(h,u,r)=>u
     }
 
     .modal-actions button {
-      padding: 10px 20px;
+      padding: 12px 24px;
       border: none;
-      border-radius: 6px;
+      border-radius: 12px;
       cursor: pointer;
       font-size: 14px;
       font-weight: 600;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 100px;
+      justify-content: center;
     }
 
     .btn-save {
-      background: #007bff;
+      background: linear-gradient(135deg, #10b981, #059669);
       color: white;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
     }
 
     .btn-save:hover {
-      background: #0056b3;
+      background: linear-gradient(135deg, #059669, #047857);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-save:before {
+      content: '💾';
+      font-size: 12px;
     }
 
     .btn-cancel {
-      background: #6c757d;
-      color: white;
+      background: rgba(255, 255, 255, 0.1);
+      color: #64748b;
+      border: 1px solid rgba(255, 255, 255, 0.3);
     }
 
     .btn-cancel:hover {
-      background: #545b62;
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.4);
+      color: #475569;
+      transform: translateY(-1px);
     }
-  `,document.head.appendChild(t)}function B(t){const e=t.querySelector(".modal-close"),n=t.querySelector(".btn-save"),i=t.querySelector(".btn-cancel"),o=t.querySelector(".note-title-input"),s=t.querySelector(".note-content-input");e.addEventListener("click",()=>m(t)),i.addEventListener("click",()=>m(t)),n.addEventListener("click",()=>{const d=o.value.trim()||"Untitled Note",c=s.value.trim();c&&(P(d,c),S(),m(t))}),t.addEventListener("click",d=>{d.target===t.querySelector(".modal-backdrop")&&m(t)}),document.addEventListener("keydown",d=>{d.key==="Escape"&&m(t)});let a;const g=()=>{clearTimeout(a),a=window.setTimeout(()=>{const d=o.value.trim()||"Draft",c=s.value.trim();c&&r.storage.local.set({"sticky-note-draft":{title:d,content:c}})},2e3)};o.addEventListener("input",g),s.addEventListener("input",g),r.storage.local.get("sticky-note-draft",d=>{const c=d["sticky-note-draft"];c&&(o.value=c.title,s.value=c.content)})}function m(t){t.remove(),r.storage.local.remove("sticky-note-draft")}function P(t,e){r.storage.local.get("sticky-notes",n=>{const i=n["sticky-notes"]||[],o={id:Date.now().toString(),title:t,content:e,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};i.push(o),r.storage.local.set({"sticky-notes":i},()=>{console.log("Note saved:",o)})})}function S(){const t=document.getElementById("sticky-note-widget");if(!t){console.error("Widget does not exist in the DOM.");return}const e=t.querySelector(".notes-list");r.storage.local.get("sticky-notes",n=>{const i=n["sticky-notes"]||[];if(i.length===0){e.innerHTML='<div class="no-notes">No notes yet. Click + to add one!</div>';return}e.innerHTML=i.map(o=>`
-      <div class="note-item" data-note-id="${o.id}">
-        <div class="note-title">${o.title}</div>
-        <div class="note-preview">${o.content.substring(0,50)}${o.content.length>50?"...":""}</div>
+
+    .btn-cancel:before {
+      content: '✕';
+      font-size: 10px;
+    }
+
+    /* Auto-save indicator */
+    .auto-save-indicator {
+      position: absolute;
+      top: 24px;
+      right: 80px;
+      padding: 6px 12px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 20px;
+      font-size: 11px;
+      color: #059669;
+      font-weight: 500;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .auto-save-indicator.show {
+      opacity: 1;
+    }
+
+    .auto-save-indicator:before {
+      content: '💾';
+      margin-right: 4px;
+      font-size: 10px;
+    }
+  `,document.head.appendChild(t)}function q(t){const e=t.querySelector(".modal-close"),o=t.querySelector(".btn-save"),n=t.querySelector(".btn-cancel"),i=t.querySelector(".note-title-input"),r=t.querySelector(".note-content-input");e.addEventListener("click",()=>u(t)),n.addEventListener("click",()=>u(t)),o.addEventListener("click",()=>{const d=i.value.trim()||"Untitled Note",l=r.value.trim();l&&(D(d,l),u(t))}),t.addEventListener("click",d=>{d.target===t.querySelector(".modal-backdrop")&&u(t)}),document.addEventListener("keydown",d=>{d.key==="Escape"&&u(t)});let s;const c=()=>{clearTimeout(s),s=window.setTimeout(()=>{const d=i.value.trim()||"Draft",l=r.value.trim();l&&a.storage.local.set({"sticky-note-draft":{title:d,content:l}})},2e3)};i.addEventListener("input",c),r.addEventListener("input",c),a.storage.local.get("sticky-note-draft",d=>{const l=d["sticky-note-draft"];l&&(i.value=l.title,r.value=l.content)})}function u(t){t.remove(),a.storage.local.remove("sticky-note-draft")}function D(t,e){a.storage.local.get("sticky-notes",o=>{const n=o["sticky-notes"]||[],i={id:Date.now().toString(),title:t,content:e,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};n.push(i),a.storage.local.set({"sticky-notes":n},()=>{console.log("Note saved:",i),N()})})}function N(){const t=document.getElementById("sticky-note-widget");if(!t){console.error("Widget does not exist in the DOM.");return}const e=t.querySelector(".notes-list");a.storage.local.get("sticky-notes",o=>{const n=o["sticky-notes"]||[];if(n.length===0){e.innerHTML='<div class="no-notes">No notes yet. Click + to add one!</div>';return}e.innerHTML=n.map(i=>`
+      <div class="note-item" data-note-id="${i.id}">
+        <div class="note-title">${i.title}</div>
+        <div class="note-preview">${i.content.substring(0,50)}${i.content.length>50?"...":""}</div>
       </div>
-    `).join(""),e.querySelectorAll(".note-item").forEach(o=>{o.addEventListener("click",s=>{const a=s.currentTarget.dataset.noteId;console.log("Clicked note:",a)})})})}function F(t,e){r.storage.local.set({"sticky-settings":{widgetPosition:{x:t,y:e}}})}function D(){try{r.storage.local.get("sticky-settings",t=>{const e=t["sticky-settings"];if(e&&e.widgetPosition){const{x:n,y:i}=e.widgetPosition,o=document.getElementById("sticky-note-widget");o&&(o.style.left=n+"px",o.style.top=i+"px",o.style.right="auto")}})}catch(t){console.error("Failed to load widget position:",t)}}function b(t,...e){}const $={debug:(...t)=>b(console.debug,...t),log:(...t)=>b(console.log,...t),warn:(...t)=>b(console.warn,...t),error:(...t)=>b(console.error,...t)},v=class v extends Event{constructor(e,n){super(v.EVENT_NAME,{}),this.newUrl=e,this.oldUrl=n}};p(v,"EVENT_NAME",w("wxt:locationchange"));let x=v;function w(t){var e;return`${(e=r==null?void 0:r.runtime)==null?void 0:e.id}:content:${t}`}function R(t){let e,n;return{run(){e==null&&(n=new URL(location.href),e=t.setInterval(()=>{let i=new URL(location.href);i.href!==n.href&&(window.dispatchEvent(new x(i,n)),n=i)},1e3))}}}const f=class f{constructor(e,n){p(this,"isTopFrame",window.self===window.top);p(this,"abortController");p(this,"locationWatcher",R(this));p(this,"receivedMessageIds",new Set);this.contentScriptName=e,this.options=n,this.abortController=new AbortController,this.isTopFrame?(this.listenForNewerScripts({ignoreFirstEvent:!0}),this.stopOldScripts()):this.listenForNewerScripts()}get signal(){return this.abortController.signal}abort(e){return this.abortController.abort(e)}get isInvalid(){return r.runtime.id==null&&this.notifyInvalidated(),this.signal.aborted}get isValid(){return!this.isInvalid}onInvalidated(e){return this.signal.addEventListener("abort",e),()=>this.signal.removeEventListener("abort",e)}block(){return new Promise(()=>{})}setInterval(e,n){const i=setInterval(()=>{this.isValid&&e()},n);return this.onInvalidated(()=>clearInterval(i)),i}setTimeout(e,n){const i=setTimeout(()=>{this.isValid&&e()},n);return this.onInvalidated(()=>clearTimeout(i)),i}requestAnimationFrame(e){const n=requestAnimationFrame((...i)=>{this.isValid&&e(...i)});return this.onInvalidated(()=>cancelAnimationFrame(n)),n}requestIdleCallback(e,n){const i=requestIdleCallback((...o)=>{this.signal.aborted||e(...o)},n);return this.onInvalidated(()=>cancelIdleCallback(i)),i}addEventListener(e,n,i,o){var s;n==="wxt:locationchange"&&this.isValid&&this.locationWatcher.run(),(s=e.addEventListener)==null||s.call(e,n.startsWith("wxt:")?w(n):n,i,{...o,signal:this.signal})}notifyInvalidated(){this.abort("Content script context invalidated"),$.debug(`Content script "${this.contentScriptName}" context invalidated`)}stopOldScripts(){window.postMessage({type:f.SCRIPT_STARTED_MESSAGE_TYPE,contentScriptName:this.contentScriptName,messageId:Math.random().toString(36).slice(2)},"*")}verifyScriptStartedEvent(e){var s,a,g;const n=((s=e.data)==null?void 0:s.type)===f.SCRIPT_STARTED_MESSAGE_TYPE,i=((a=e.data)==null?void 0:a.contentScriptName)===this.contentScriptName,o=!this.receivedMessageIds.has((g=e.data)==null?void 0:g.messageId);return n&&i&&o}listenForNewerScripts(e){let n=!0;const i=o=>{if(this.verifyScriptStartedEvent(o)){this.receivedMessageIds.add(o.data.messageId);const s=n;if(n=!1,s&&(e!=null&&e.ignoreFirstEvent))return;this.notifyInvalidated()}};addEventListener("message",i),this.onInvalidated(()=>removeEventListener("message",i))}};p(f,"SCRIPT_STARTED_MESSAGE_TYPE",w("wxt:content-script-started"));let k=f;function _(){}function y(t,...e){}const U={debug:(...t)=>y(console.debug,...t),log:(...t)=>y(console.log,...t),warn:(...t)=>y(console.warn,...t),error:(...t)=>y(console.error,...t)};return(async()=>{try{const{main:t,...e}=N,n=new k("content",e);return await t(n)}catch(t){throw U.error('The content script "content" crashed on startup!',t),t}})()}();
+    `).join(""),e.querySelectorAll(".note-item").forEach(i=>{i.addEventListener("click",r=>{const s=r.currentTarget.dataset.noteId;console.log("Clicked note:",s)})})})}function W(t,e){a.storage.local.set({"sticky-settings":{widgetPosition:{x:t,y:e}}})}function P(){try{a.storage.local.get("sticky-settings",t=>{const e=t["sticky-settings"];if(e&&e.widgetPosition){const{x:o,y:n}=e.widgetPosition,i=document.getElementById("sticky-note-widget");i&&(i.style.left=o+"px",i.style.top=n+"px",i.style.right="auto")}})}catch(t){console.error("Failed to load widget position:",t)}}function f(t,...e){}const Y={debug:(...t)=>f(console.debug,...t),log:(...t)=>f(console.log,...t),warn:(...t)=>f(console.warn,...t),error:(...t)=>f(console.error,...t)},x=class x extends Event{constructor(e,o){super(x.EVENT_NAME,{}),this.newUrl=e,this.oldUrl=o}};m(x,"EVENT_NAME",k("wxt:locationchange"));let v=x;function k(t){var e;return`${(e=a==null?void 0:a.runtime)==null?void 0:e.id}:content:${t}`}function U(t){let e,o;return{run(){e==null&&(o=new URL(location.href),e=t.setInterval(()=>{let n=new URL(location.href);n.href!==o.href&&(window.dispatchEvent(new v(n,o)),o=n)},1e3))}}}const y=class y{constructor(e,o){m(this,"isTopFrame",window.self===window.top);m(this,"abortController");m(this,"locationWatcher",U(this));m(this,"receivedMessageIds",new Set);this.contentScriptName=e,this.options=o,this.abortController=new AbortController,this.isTopFrame?(this.listenForNewerScripts({ignoreFirstEvent:!0}),this.stopOldScripts()):this.listenForNewerScripts()}get signal(){return this.abortController.signal}abort(e){return this.abortController.abort(e)}get isInvalid(){return a.runtime.id==null&&this.notifyInvalidated(),this.signal.aborted}get isValid(){return!this.isInvalid}onInvalidated(e){return this.signal.addEventListener("abort",e),()=>this.signal.removeEventListener("abort",e)}block(){return new Promise(()=>{})}setInterval(e,o){const n=setInterval(()=>{this.isValid&&e()},o);return this.onInvalidated(()=>clearInterval(n)),n}setTimeout(e,o){const n=setTimeout(()=>{this.isValid&&e()},o);return this.onInvalidated(()=>clearTimeout(n)),n}requestAnimationFrame(e){const o=requestAnimationFrame((...n)=>{this.isValid&&e(...n)});return this.onInvalidated(()=>cancelAnimationFrame(o)),o}requestIdleCallback(e,o){const n=requestIdleCallback((...i)=>{this.signal.aborted||e(...i)},o);return this.onInvalidated(()=>cancelIdleCallback(n)),n}addEventListener(e,o,n,i){var r;o==="wxt:locationchange"&&this.isValid&&this.locationWatcher.run(),(r=e.addEventListener)==null||r.call(e,o.startsWith("wxt:")?k(o):o,n,{...i,signal:this.signal})}notifyInvalidated(){this.abort("Content script context invalidated"),Y.debug(`Content script "${this.contentScriptName}" context invalidated`)}stopOldScripts(){window.postMessage({type:y.SCRIPT_STARTED_MESSAGE_TYPE,contentScriptName:this.contentScriptName,messageId:Math.random().toString(36).slice(2)},"*")}verifyScriptStartedEvent(e){var r,s,c;const o=((r=e.data)==null?void 0:r.type)===y.SCRIPT_STARTED_MESSAGE_TYPE,n=((s=e.data)==null?void 0:s.contentScriptName)===this.contentScriptName,i=!this.receivedMessageIds.has((c=e.data)==null?void 0:c.messageId);return o&&n&&i}listenForNewerScripts(e){let o=!0;const n=i=>{if(this.verifyScriptStartedEvent(i)){this.receivedMessageIds.add(i.data.messageId);const r=o;if(o=!1,r&&(e!=null&&e.ignoreFirstEvent))return;this.notifyInvalidated()}};addEventListener("message",n),this.onInvalidated(()=>removeEventListener("message",n))}};m(y,"SCRIPT_STARTED_MESSAGE_TYPE",k("wxt:content-script-started"));let S=y;function X(){}function h(t,...e){}const R={debug:(...t)=>h(console.debug,...t),log:(...t)=>h(console.log,...t),warn:(...t)=>h(console.warn,...t),error:(...t)=>h(console.error,...t)};return(async()=>{try{const{main:t,...e}=M,o=new S("content",e);return await t(o)}catch(t){throw R.error('The content script "content" crashed on startup!',t),t}})()}();
 content;

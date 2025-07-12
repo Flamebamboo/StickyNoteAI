@@ -2,40 +2,169 @@ export default defineContentScript({
   matches: ["<all_urls>"],
   main() {
     console.log("StickyNoteAI: Initializing...");
-    createFloatingWidget();
 
-    // Initialize widget position and notes list after creation
-    setTimeout(() => {
-      loadWidgetPosition();
-      refreshNotesList();
-    }, 100);
+    // Wait for DOM to be ready
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", () => {
+        initializeWidget();
+      });
+    } else {
+      initializeWidget();
+    }
   },
 });
 
+function initializeWidget() {
+  console.log("StickyNoteAI: DOM ready, creating widget...");
+
+  // Simple test to confirm content script is running
+  console.log("StickyNoteAI: Content script is running on:", window.location.href);
+
+  createFloatingWidget();
+
+  // Initialize widget position and notes list after creation
+  setTimeout(() => {
+    loadWidgetPosition();
+    refreshNotesList();
+  }, 100);
+
+  // Listen for messages from background script
+  browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    console.log("StickyNoteAI: Received message:", message);
+
+    if (message.action === "toggle-widget") {
+      const widget = document.getElementById("sticky-note-widget");
+      if (widget) {
+        widget.style.display = widget.style.display === "none" ? "block" : "none";
+        console.log("StickyNoteAI: Widget toggled via command");
+      }
+    } else if (message.action === "new-note") {
+      createNoteEditor();
+      console.log("StickyNoteAI: Note editor opened via command");
+    }
+
+    sendResponse({ success: true });
+  });
+}
+
 function createFloatingWidget() {
+  console.log("StickyNoteAI: Creating floating widget...");
+
   // Check if widget already exists
   if (document.getElementById("sticky-note-widget")) {
+    console.log("StickyNoteAI: Widget already exists");
     return;
   }
 
-  // Create the main widget container
+  // Check if we can access document.body
+  if (!document.body) {
+    console.log("StickyNoteAI: document.body not available, retrying...");
+    setTimeout(() => createFloatingWidget(), 100);
+    return;
+  } // Create the main widget container
   const widget = document.createElement("div");
   widget.id = "sticky-note-widget";
+  widget.style.cssText = `
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    width: 280px !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+    z-index: 999999 !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    font-size: 14px !important;
+    cursor: move !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    overflow: hidden !important;
+  `;
+
   widget.innerHTML = `
-    <div class="widget-header">
-      <span class="widget-icon">📝</span>
-      <button class="btn-add" title="Add Note">+</button>
-      <button class="btn-menu" title="Menu">≡</button>
-      <button class="btn-hide" title="Hide">×</button>
+    <div class="widget-header" style="
+      display: flex; 
+      align-items: center; 
+      padding: 16px 20px; 
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1)); 
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
+      gap: 12px;
+      backdrop-filter: blur(10px);
+    ">
+      <span class="widget-icon" style="font-size: 18px; flex: 1; color: #6366f1; filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.3));">✨</span>
+      <button class="btn-add" title="Add Note" style="
+        background: linear-gradient(135deg, #10b981, #059669); 
+        border: none; 
+        padding: 8px 12px; 
+        border-radius: 8px; 
+        cursor: pointer; 
+        font-size: 12px; 
+        font-weight: 600; 
+        color: white;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        transition: all 0.2s ease;
+      ">+ Add</button>
+      <button class="btn-menu" title="Menu" style="
+        background: rgba(255, 255, 255, 0.1); 
+        border: 1px solid rgba(255, 255, 255, 0.2); 
+        padding: 8px; 
+        border-radius: 8px; 
+        cursor: pointer; 
+        font-size: 14px; 
+        font-weight: bold; 
+        color: #64748b;
+        transition: all 0.2s ease;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      ">≡</button>
+      <button class="btn-hide" title="Hide" style="
+        background: rgba(255, 255, 255, 0.1); 
+        border: 1px solid rgba(255, 255, 255, 0.2); 
+        padding: 8px; 
+        border-radius: 8px; 
+        cursor: pointer; 
+        font-size: 14px; 
+        font-weight: bold; 
+        color: #ef4444;
+        transition: all 0.2s ease;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      ">×</button>
     </div>
-    <div class="widget-body" style="display: none;">
-      <div class="notes-list">
-        <div class="no-notes">No notes yet. Click + to add one!</div>
+    <div class="widget-body" style="
+      display: none; 
+      padding: 20px; 
+      max-height: 400px; 
+      overflow-y: auto;
+      background: rgba(255, 255, 255, 0.05);
+    ">
+      <div class="notes-list" style="display: flex; flex-direction: column; gap: 12px;">
+        <div class="no-notes" style="
+          color: #64748b; 
+          font-style: italic; 
+          text-align: center; 
+          padding: 32px 16px;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 12px;
+          border: 1px dashed rgba(255, 255, 255, 0.2);
+        ">
+          <div style="font-size: 24px; margin-bottom: 8px;">📝</div>
+          <div style="font-size: 13px; color: #94a3b8;">No notes yet</div>
+          <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Click + Add to create your first note</div>
+        </div>
       </div>
     </div>
   `;
 
-  // Add styles
+  // Add styles (still useful for hover effects)
   addWidgetStyles();
 
   // Make widget draggable
@@ -47,7 +176,20 @@ function createFloatingWidget() {
   // Insert widget into page
   document.body.appendChild(widget);
 
-  console.log("StickyNoteAI: Widget created successfully");
+  console.log("StickyNoteAI: Widget created successfully and added to DOM");
+
+  // Force visibility
+  widget.style.display = "block";
+  widget.style.visibility = "visible";
+
+  // Verify widget is in DOM
+  const verifyWidget = document.getElementById("sticky-note-widget");
+  if (verifyWidget) {
+    console.log("StickyNoteAI: Widget verification successful");
+    console.log("Widget position:", verifyWidget.style.top, verifyWidget.style.right);
+  } else {
+    console.error("StickyNoteAI: Widget verification failed!");
+  }
 }
 
 function addWidgetStyles() {
@@ -58,139 +200,171 @@ function addWidgetStyles() {
   const styles = document.createElement("style");
   styles.id = "sticky-note-styles";
   styles.textContent = `
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+    
     #sticky-note-widget {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      width: 200px;
-      background: rgba(255, 255, 255, 0.95);
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      z-index: 999999;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 14px;
-      backdrop-filter: blur(10px);
-      cursor: move;
-      transition: all 0.2s ease;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
     }
 
     #sticky-note-widget:hover {
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+      transform: translateY(-2px) !important;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15) !important;
     }
 
-    .widget-header {
-      display: flex;
-      align-items: center;
-      padding: 8px 12px;
-      background: rgba(248, 249, 250, 0.9);
-      border-radius: 8px 8px 0 0;
-      border-bottom: 1px solid #eee;
-      gap: 8px;
+    #sticky-note-widget .btn-add:hover {
+      background: linear-gradient(135deg, #059669, #047857) !important;
+      transform: translateY(-1px) !important;
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4) !important;
     }
 
-    .widget-icon {
-      font-size: 16px;
-      flex: 1;
+    #sticky-note-widget .btn-menu:hover,
+    #sticky-note-widget .btn-hide:hover {
+      background: rgba(255, 255, 255, 0.2) !important;
+      transform: translateY(-1px) !important;
     }
 
-    .widget-header button {
-      background: none;
-      border: none;
-      padding: 4px 8px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: bold;
-      transition: background-color 0.2s ease;
+    #sticky-note-widget .note-item {
+      background: rgba(255, 255, 255, 0.1) !important;
+      backdrop-filter: blur(10px) !important;
+      padding: 16px !important;
+      border-radius: 12px !important;
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      cursor: pointer !important;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      position: relative !important;
+      overflow: hidden !important;
     }
 
-    .widget-header button:hover {
-      background: rgba(0, 0, 0, 0.1);
+    #sticky-note-widget .note-item:before {
+      content: '' !important;
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      height: 3px !important;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899) !important;
+      opacity: 0 !important;
+      transition: opacity 0.3s ease !important;
     }
 
-    .btn-add {
-      color: #28a745;
+    #sticky-note-widget .note-item:hover {
+      background: rgba(255, 255, 255, 0.15) !important;
+      transform: translateY(-2px) scale(1.02) !important;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
     }
 
-    .btn-menu {
-      color: #6c757d;
+    #sticky-note-widget .note-item:hover:before {
+      opacity: 1 !important;
     }
 
-    .btn-hide {
-      color: #dc3545;
+    #sticky-note-widget .note-title {
+      font-weight: 600 !important;
+      margin-bottom: 8px !important;
+      color: #1e293b !important;
+      font-size: 14px !important;
+      line-height: 1.4 !important;
     }
 
-    .widget-body {
-      padding: 12px;
-      max-height: 300px;
-      overflow-y: auto;
+    #sticky-note-widget .note-preview {
+      color: #64748b !important;
+      font-size: 12px !important;
+      line-height: 1.5 !important;
+      overflow: hidden !important;
+      display: -webkit-box !important;
+      -webkit-line-clamp: 2 !important;
+      -webkit-box-orient: vertical !important;
     }
 
-    .notes-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+    #sticky-note-widget .note-meta {
+      margin-top: 8px !important;
+      font-size: 10px !important;
+      color: #94a3b8 !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 4px !important;
     }
 
-    .no-notes {
-      color: #6c757d;
-      font-style: italic;
-      text-align: center;
-      padding: 20px 10px;
+    #sticky-note-widget .note-meta:before {
+      content: '📅' !important;
+      font-size: 8px !important;
     }
 
-    .note-item {
-      background: #f8f9fa;
-      padding: 8px 12px;
-      border-radius: 6px;
-      border-left: 3px solid #007bff;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .note-item:hover {
-      background: #e9ecef;
-      transform: translateY(-1px);
-    }
-
-    .note-title {
-      font-weight: 600;
-      margin-bottom: 4px;
-      color: #333;
-    }
-
-    .note-preview {
-      color: #6c757d;
-      font-size: 12px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    /* Hide widget when in stealth mode */
+    /* Stealth mode - ultra minimal */
     #sticky-note-widget.stealth {
-      opacity: 0.3;
-      transform: scale(0.8);
+      opacity: 0.1 !important;
+      transform: scale(0.85) !important;
+      transition: all 0.3s ease !important;
     }
 
+    #sticky-note-widget.stealth:hover {
+      opacity: 0.9 !important;
+      transform: scale(1) translateY(-2px) !important;
+    }
+
+    /* Minimized state */
     #sticky-note-widget.minimized {
-      width: 60px;
-      height: 40px;
-    }
-
-    #sticky-note-widget.minimized .widget-body {
-      display: none !important;
+      width: 64px !important;
+      height: 64px !important;
+      border-radius: 50% !important;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.9), rgba(168, 85, 247, 0.9)) !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
     }
 
     #sticky-note-widget.minimized .widget-header {
-      padding: 8px;
-      justify-content: center;
+      border: none !important;
+      background: none !important;
+      padding: 0 !important;
+      justify-content: center !important;
     }
 
+    #sticky-note-widget.minimized .widget-icon {
+      font-size: 24px !important;
+      color: white !important;
+      filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)) !important;
+    }
+
+    #sticky-note-widget.minimized .widget-body,
     #sticky-note-widget.minimized .btn-menu,
-    #sticky-note-widget.minimized .btn-add {
-      display: none;
+    #sticky-note-widget.minimized .btn-add,
+    #sticky-note-widget.minimized .btn-hide {
+      display: none !important;
+    }
+
+    /* Animations */
+    @keyframes noteSlideIn {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    #sticky-note-widget .note-item {
+      animation: noteSlideIn 0.3s ease-out !important;
+    }
+
+    /* Scrollbar styling */
+    #sticky-note-widget .widget-body::-webkit-scrollbar {
+      width: 4px !important;
+    }
+
+    #sticky-note-widget .widget-body::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1) !important;
+      border-radius: 2px !important;
+    }
+
+    #sticky-note-widget .widget-body::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3) !important;
+      border-radius: 2px !important;
+    }
+
+    #sticky-note-widget .widget-body::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.5) !important;
     }
   `;
 
@@ -284,13 +458,16 @@ function addWidgetEventListeners(widget: HTMLElement) {
     widget.classList.toggle("minimized");
   });
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts (Mac-compatible)
   document.addEventListener("keydown", (e) => {
-    if (e.ctrlKey && e.shiftKey && e.key === "H") {
+    const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+    const cmdOrCtrl = isMac ? e.metaKey : e.ctrlKey;
+
+    if (cmdOrCtrl && e.shiftKey && e.key === "W") {
       e.preventDefault();
       widget.style.display = widget.style.display === "none" ? "block" : "none";
     }
-    if (e.ctrlKey && e.shiftKey && e.key === "N") {
+    if (cmdOrCtrl && e.shiftKey && e.key === "S") {
       e.preventDefault();
       createNoteEditor();
     }
@@ -309,15 +486,21 @@ function createNoteEditor() {
     <div class="modal-backdrop">
       <div class="modal-content">
         <div class="modal-header">
-          <h3>Quick Note</h3>
+          <h3>Create Note</h3>
+          <div class="auto-save-indicator">Draft saved</div>
           <button class="modal-close">×</button>
         </div>
         <div class="modal-body">
-          <input type="text" placeholder="Note title..." class="note-title-input">
-          <textarea placeholder="Start typing your note..." class="note-content-input"></textarea>
+          <input type="text" placeholder="Give your note a title..." class="note-title-input">
+          <textarea placeholder="Start writing your thoughts here...
+
+💡 Tips:
+• Use markdown for formatting
+• Notes auto-save as you type
+• Press Esc to close quickly" class="note-content-input"></textarea>
           <div class="modal-actions">
-            <button class="btn-save">Save Note</button>
             <button class="btn-cancel">Cancel</button>
+            <button class="btn-save">Save Note</button>
           </div>
         </div>
       </div>
@@ -352,31 +535,57 @@ function addModalStyles() {
       width: 100%;
       height: 100%;
       z-index: 9999999;
+      animation: modalFadeIn 0.3s ease-out;
+    }
+
+    @keyframes modalFadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes modalSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
     }
 
     .modal-backdrop {
-      background: rgba(0, 0, 0, 0.5);
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
       width: 100%;
       height: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 20px;
     }
 
     .modal-content {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-      width: 90%;
-      max-width: 500px;
-      max-height: 80vh;
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9));
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 20px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
       overflow: hidden;
+      animation: modalSlideIn 0.3s ease-out;
     }
 
     .modal-header {
-      background: #f8f9fa;
-      padding: 16px 20px;
-      border-bottom: 1px solid #dee2e6;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1));
+      padding: 24px 28px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -384,53 +593,99 @@ function addModalStyles() {
 
     .modal-header h3 {
       margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .modal-header h3:before {
+      content: '✨';
       font-size: 18px;
-      color: #333;
+      filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.3));
     }
 
     .modal-close {
-      background: none;
-      border: none;
-      font-size: 24px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      font-size: 20px;
       cursor: pointer;
-      color: #6c757d;
+      color: #64748b;
       padding: 0;
-      width: 30px;
-      height: 30px;
+      width: 40px;
+      height: 40px;
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 50%;
+      border-radius: 12px;
+      transition: all 0.2s ease;
     }
 
     .modal-close:hover {
-      background: rgba(0, 0, 0, 0.1);
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.3);
+      color: #ef4444;
+      transform: scale(1.05);
     }
 
     .modal-body {
-      padding: 20px;
+      padding: 28px;
     }
 
     .note-title-input {
       width: 100%;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
+      padding: 16px 20px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
       font-size: 16px;
-      margin-bottom: 12px;
-      font-family: inherit;
+      font-weight: 500;
+      margin-bottom: 16px;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(10px);
+      color: #1e293b;
+      transition: all 0.2s ease;
+      outline: none;
+    }
+
+    .note-title-input:focus {
+      border-color: rgba(99, 102, 241, 0.5);
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+      background: rgba(255, 255, 255, 0.8);
+    }
+
+    .note-title-input::placeholder {
+      color: #94a3b8;
     }
 
     .note-content-input {
       width: 100%;
-      min-height: 150px;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
+      min-height: 180px;
+      padding: 20px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
       font-size: 14px;
-      font-family: inherit;
+      line-height: 1.6;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(10px);
+      color: #1e293b;
       resize: vertical;
-      margin-bottom: 16px;
+      margin-bottom: 24px;
+      transition: all 0.2s ease;
+      outline: none;
+    }
+
+    .note-content-input:focus {
+      border-color: rgba(99, 102, 241, 0.5);
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+      background: rgba(255, 255, 255, 0.8);
+    }
+
+    .note-content-input::placeholder {
+      color: #94a3b8;
     }
 
     .modal-actions {
@@ -440,31 +695,80 @@ function addModalStyles() {
     }
 
     .modal-actions button {
-      padding: 10px 20px;
+      padding: 12px 24px;
       border: none;
-      border-radius: 6px;
+      border-radius: 12px;
       cursor: pointer;
       font-size: 14px;
       font-weight: 600;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 100px;
+      justify-content: center;
     }
 
     .btn-save {
-      background: #007bff;
+      background: linear-gradient(135deg, #10b981, #059669);
       color: white;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
     }
 
     .btn-save:hover {
-      background: #0056b3;
+      background: linear-gradient(135deg, #059669, #047857);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-save:before {
+      content: '💾';
+      font-size: 12px;
     }
 
     .btn-cancel {
-      background: #6c757d;
-      color: white;
+      background: rgba(255, 255, 255, 0.1);
+      color: #64748b;
+      border: 1px solid rgba(255, 255, 255, 0.3);
     }
 
     .btn-cancel:hover {
-      background: #545b62;
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.4);
+      color: #475569;
+      transform: translateY(-1px);
+    }
+
+    .btn-cancel:before {
+      content: '✕';
+      font-size: 10px;
+    }
+
+    /* Auto-save indicator */
+    .auto-save-indicator {
+      position: absolute;
+      top: 24px;
+      right: 80px;
+      padding: 6px 12px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 20px;
+      font-size: 11px;
+      color: #059669;
+      font-weight: 500;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .auto-save-indicator.show {
+      opacity: 1;
+    }
+
+    .auto-save-indicator:before {
+      content: '💾';
+      margin-right: 4px;
+      font-size: 10px;
     }
   `;
 
@@ -489,7 +793,6 @@ function addModalEventListeners(modal: HTMLElement) {
 
     if (content) {
       saveNote(title, content);
-      refreshNotesList();
       closeModal(modal);
     }
   });
@@ -561,6 +864,8 @@ function saveNote(title: string, content: string) {
     notes.push(newNote);
     browser.storage.local.set({ "sticky-notes": notes }, () => {
       console.log("Note saved:", newNote);
+      // Refresh the notes list after saving is complete
+      refreshNotesList();
     });
   });
 }
@@ -627,5 +932,3 @@ function loadWidgetPosition() {
     console.error("Failed to load widget position:", e);
   }
 }
-
-// Initialize widget position and notes list after creation

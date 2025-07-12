@@ -13,14 +13,6 @@ export default defineConfig({
       default_title: "StickyNoteAI",
       default_popup: "entrypoints/popup/index.html",
     },
-    content_scripts: [
-      {
-        matches: ["<all_urls>"],
-        js: ["entrypoints/content.ts"],
-        run_at: "document_end",
-        all_frames: false,
-      },
-    ],
     web_accessible_resources: [
       {
         resources: ["assets/*"],
@@ -30,15 +22,15 @@ export default defineConfig({
     commands: {
       "toggle-widget": {
         suggested_key: {
-          default: "Ctrl+Shift+H",
-          mac: "Command+Shift+H",
+          default: "Ctrl+Shift+W",
+          mac: "Command+Shift+W",
         },
         description: "Toggle widget visibility",
       },
       "new-note": {
         suggested_key: {
-          default: "Ctrl+Shift+N",
-          mac: "Command+Shift+N",
+          default: "Ctrl+Shift+S",
+          mac: "Command+Shift+S",
         },
         description: "Create new note",
       },

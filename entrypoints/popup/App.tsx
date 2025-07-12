@@ -19,15 +19,33 @@ function App() {
     // Load notes from storage
     loadNotes();
     loadSettings();
+
+    // Listen for storage changes to keep popup in sync
+    const handleStorageChange = (changes: any) => {
+      if (changes["sticky-notes"]) {
+        setNotes(changes["sticky-notes"].newValue || []);
+      }
+      if (changes["sticky-settings"]) {
+        const newSettings = changes["sticky-settings"].newValue;
+        if (newSettings) {
+          setStealthMode(newSettings.stealthMode || false);
+        }
+      }
+    };
+
+    browser.storage.onChanged.addListener(handleStorageChange);
+
+    return () => {
+      browser.storage.onChanged.removeListener(handleStorageChange);
+    };
   }, []);
 
   const loadNotes = async () => {
     try {
-      // In a real extension, we'd use chrome.storage.local
-      const storedNotes = localStorage.getItem("sticky-notes");
-      if (storedNotes) {
-        setNotes(JSON.parse(storedNotes));
-      }
+      browser.storage.local.get("sticky-notes", (result) => {
+        const notes = result["sticky-notes"] || [];
+        setNotes(notes);
+      });
     } catch (error) {
       console.error("Failed to load notes:", error);
     }
@@ -35,24 +53,25 @@ function App() {
 
   const loadSettings = async () => {
     try {
-      const settings = localStorage.getItem("sticky-settings");
-      if (settings) {
-        const { stealthMode: storedStealth } = JSON.parse(settings);
-        setStealthMode(storedStealth || false);
-      }
+      browser.storage.local.get("sticky-settings", (result) => {
+        const settings = result["sticky-settings"];
+        if (settings) {
+          setStealthMode(settings.stealthMode || false);
+        }
+      });
     } catch (error) {
       console.error("Failed to load settings:", error);
     }
   };
 
   const saveSettings = (newSettings: any) => {
-    localStorage.setItem("sticky-settings", JSON.stringify(newSettings));
+    browser.storage.local.set({ "sticky-settings": newSettings });
   };
 
   const deleteNote = (noteId: string) => {
     const updatedNotes = notes.filter((note) => note.id !== noteId);
     setNotes(updatedNotes);
-    localStorage.setItem("sticky-notes", JSON.stringify(updatedNotes));
+    browser.storage.local.set({ "sticky-notes": updatedNotes });
   };
 
   const exportNotes = () => {
@@ -113,7 +132,7 @@ function App() {
               <div className="action-card">
                 <h3>Quick Start</h3>
                 <p>
-                  Press <kbd>Ctrl+Shift+N</kbd> to create a new note anywhere on the web!
+                  Press <kbd>{navigator.platform.toUpperCase().indexOf("MAC") >= 0 ? "Cmd" : "Ctrl"}+Shift+S</kbd> to create a new note anywhere on the web!
                 </p>
               </div>
             </div>
@@ -128,7 +147,7 @@ function App() {
                     <li>Click the + button to add a note</li>
                     <li>Drag the widget to move it around</li>
                     <li>
-                      Use <kbd>Ctrl+Shift+H</kbd> to hide/show
+                      Use <kbd>{navigator.platform.toUpperCase().indexOf("MAC") >= 0 ? "Cmd" : "Ctrl"}+Shift+W</kbd> to hide/show
                     </li>
                   </ul>
                 </div>
@@ -170,11 +189,11 @@ function App() {
               <h3>Keyboard Shortcuts</h3>
               <div className="shortcuts-list">
                 <div className="shortcut-item">
-                  <kbd>Ctrl + Shift + N</kbd>
+                  <kbd>{navigator.platform.toUpperCase().indexOf("MAC") >= 0 ? "Cmd" : "Ctrl"} + Shift + S</kbd>
                   <span>New Note</span>
                 </div>
                 <div className="shortcut-item">
-                  <kbd>Ctrl + Shift + H</kbd>
+                  <kbd>{navigator.platform.toUpperCase().indexOf("MAC") >= 0 ? "Cmd" : "Ctrl"} + Shift + W</kbd>
                   <span>Hide/Show Widget</span>
                 </div>
                 <div className="shortcut-item">
