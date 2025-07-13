@@ -5,6 +5,7 @@ declare module "wxt/browser" {
   export type PublicPath =
     | ""
     | "/"
+    | "/add2.png"
     | "/background.js"
     | "/content-scripts/content.js"
     | "/icon/128.png"
@@ -13,6 +14,8 @@ declare module "wxt/browser" {
     | "/icon/48.png"
     | "/icon/96.png"
     | "/popup.html"
+    | "/smilyface.gif"
+    | "/smilyface.png"
     | "/wxt.svg"
   type HtmlPublicPath = Extract<PublicPath, `${string}.html`>
   export interface WxtRuntime {

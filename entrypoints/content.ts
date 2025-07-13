@@ -39,16 +39,39 @@ function createFloatingWidget() {
   // Create main widget container
   widget = document.createElement("div");
   widget.id = "sticky-note-widget";
+
+  // Try multiple approaches to get the correct URLs for public assets
+  let smilyFaceUrl: string;
+  let add2Url: string;
+
+  try {
+    // Primary approach: Use browser.runtime.getURL
+    smilyFaceUrl = browser.runtime.getURL("smilyface.gif" as any);
+    add2Url = browser.runtime.getURL("add2.png" as any);
+  } catch (error) {
+    console.warn("browser.runtime.getURL failed, using fallback approach:", error);
+    // Fallback approach: Direct extension URL construction
+    const extensionId = browser.runtime.id || chrome.runtime.id;
+    smilyFaceUrl = `chrome-extension://${extensionId}/smilyface.gif`;
+    add2Url = `chrome-extension://${extensionId}/add2.png`;
+  }
+
+  console.log("StickyNoteAI: Image URLs:", { smilyFaceUrl, add2Url });
+  console.log("StickyNoteAI: Extension ID:", browser.runtime.id);
+  console.log("StickyNoteAI: Chrome runtime ID:", chrome.runtime.id);
+
   widget.innerHTML = `
     <div class="widget-container">
       <div class="widget-main-button" id="main-button">
-        ✨
+        <img src="${smilyFaceUrl}" alt="Widget" style="width: 24px; height: 24px;" id="smiley-image">
       </div>
       <div class="widget-menu" id="widget-menu">
-        <div class="menu-button add-button" data-action="add">➕</div>
+        <div class="menu-button add-button" data-action="add">
+          <img src="${add2Url}" alt="Add" style="width: 20px; height: 20px;" id="add-image">
+        </div>
         <div class="menu-button notes-button" data-action="notes">📋</div>
         <div class="menu-button settings-button" data-action="settings">⚙️</div>
-        <div class="menu-button close-button" data-action="close">❌</div>
+        
       </div>
     </div>
   `;
@@ -57,7 +80,7 @@ function createFloatingWidget() {
   style.textContent = `
     #sticky-note-widget {
       position: fixed;
-      bottom: 50px;
+      bottom: 50vh;
       right: 50px;
       z-index: 999999;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -73,29 +96,78 @@ function createFloatingWidget() {
     .widget-main-button {
       width: 50px;
       height: 50px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #9929EA 0%, #CC66DA 100%);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 20px;
       cursor: pointer;
-      box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+      box-shadow: 
+        0 4px 20px rgba(153, 41, 234, 0.4),
+        0 0 20px rgba(153, 41, 234, 0.5),
+        0 0 40px rgba(204, 102, 218, 0.3),
+        0 0 60px rgba(204, 102, 218, 0.2);
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      border: 2px solid rgba(255, 255, 255, 0.2);
+      border: 2px solid rgba(250, 235, 146, 0.3);
       backdrop-filter: blur(10px);
       position: relative;
+      animation: pulseGlow 3s ease-in-out infinite;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% {
+        box-shadow: 
+          0 4px 20px rgba(153, 41, 234, 0.4),
+          0 0 20px rgba(153, 41, 234, 0.5),
+          0 0 40px rgba(204, 102, 218, 0.3),
+          0 0 60px rgba(204, 102, 218, 0.2);
+      }
+      50% {
+        box-shadow: 
+          0 4px 25px rgba(153, 41, 234, 0.6),
+          0 0 30px rgba(153, 41, 234, 0.7),
+          0 0 60px rgba(204, 102, 218, 0.5),
+          0 0 90px rgba(204, 102, 218, 0.3);
+      }
     }
 
     .widget-main-button:hover {
       transform: scale(1.05);
-      box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
+      box-shadow: 
+        0 6px 25px rgba(153, 41, 234, 0.6),
+        0 0 35px rgba(153, 41, 234, 0.8),
+        0 0 70px rgba(204, 102, 218, 0.6),
+        0 0 100px rgba(204, 102, 218, 0.4);
+      animation: pulseGlowHover 2s ease-in-out infinite;
+    }
+
+    @keyframes pulseGlowHover {
+      0%, 100% {
+        box-shadow: 
+          0 6px 25px rgba(153, 41, 234, 0.6),
+          0 0 35px rgba(153, 41, 234, 0.8),
+          0 0 70px rgba(204, 102, 218, 0.6),
+          0 0 100px rgba(204, 102, 218, 0.4);
+      }
+      50% {
+        box-shadow: 
+          0 8px 30px rgba(153, 41, 234, 0.8),
+          0 0 45px rgba(153, 41, 234, 1),
+          0 0 90px rgba(204, 102, 218, 0.8),
+          0 0 130px rgba(204, 102, 218, 0.5);
+      }
     }
 
     .widget-main-button.dragging {
       cursor: grabbing !important;
       transform: scale(0.95);
-      box-shadow: 0 8px 30px rgba(102, 126, 234, 0.5);
+      box-shadow: 
+        0 8px 30px rgba(153, 41, 234, 0.7),
+        0 0 25px rgba(153, 41, 234, 0.9),
+        0 0 50px rgba(204, 102, 218, 0.7),
+        0 0 80px rgba(204, 102, 218, 0.5);
+      animation: none;
     }
 
     .widget-menu {
@@ -122,19 +194,20 @@ function createFloatingWidget() {
     .menu-button {
       width: 40px;
       height: 40px;
-      background: rgba(255, 255, 255, 0.95);
+      background: linear-gradient(135deg, #FAEB92 0%, #CC66DA 100%);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 16px;
       cursor: pointer;
-      box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 3px 15px rgba(153, 41, 234, 0.3);
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      border: 1px solid rgba(0, 0, 0, 0.1);
+      border: 2px solid rgba(153, 41, 234, 0.2);
       backdrop-filter: blur(10px);
       transform: translateY(-10px);
       opacity: 0;
+      color: #000000;
     }
 
     .widget-menu.open .menu-button {
@@ -149,13 +222,11 @@ function createFloatingWidget() {
 
     .menu-button:hover {
       transform: scale(1.1);
-      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 5px 20px rgba(153, 41, 234, 0.5);
+      background: linear-gradient(135deg, #FAEB92 0%, #9929EA 100%);
+      color: #FAEB92;
     }
 
-    .close-button:hover {
-      background: rgba(255, 107, 107, 0.9) !important;
-      color: white;
-    }
 
     .sticky-modal {
       position: fixed;
@@ -163,7 +234,7 @@ function createFloatingWidget() {
       left: 0;
       width: 100vw;
       height: 100vh;
-      background: rgba(0, 0, 0, 0.5);
+      background: rgba(0, 0, 0, 0.6);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -179,16 +250,20 @@ function createFloatingWidget() {
     }
 
     .modal-content {
-      background: white;
+      background: linear-gradient(135deg, #FAEB92 0%, #CC66DA 100%);
       padding: 30px;
       border-radius: 15px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      box-shadow: 
+        0 20px 60px rgba(153, 41, 234, 0.5),
+        0 0 0 3px rgba(0, 0, 0, 0.2),
+        0 10px 30px rgba(204, 102, 218, 0.4);
       max-width: 500px;
       width: 90%;
       max-height: 80vh;
       overflow-y: auto;
       transform: scale(0.9);
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 3px solid #000000;
     }
 
     .sticky-modal.open .modal-content {
@@ -201,46 +276,60 @@ function createFloatingWidget() {
       align-items: center;
       margin-bottom: 20px;
       padding-bottom: 15px;
-      border-bottom: 1px solid #eee;
+      border-bottom: 3px solid #000000;
+      background: #FDFFB8;
+      padding: 15px;
+      margin: -30px -30px 20px -30px;
+      border-radius: 15px 15px 0 0;
     }
 
     .modal-title {
       font-size: 20px;
       font-weight: 600;
-      color: #333;
+      color: #000000;
+      text-shadow: 0 1px 2px rgba(250, 235, 146, 0.8);
     }
 
     .modal-close {
-      background: none;
-      border: none;
+      background: #9929EA;
+      border: 2px solid #000000;
       font-size: 24px;
       cursor: pointer;
-      color: #999;
+      color: #FAEB92;
       padding: 5px;
       border-radius: 50%;
       transition: all 0.2s ease;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
     }
 
     .modal-close:hover {
-      background: #f5f5f5;
-      color: #333;
+      background: #CC66DA;
+      color: #000000;
+      transform: scale(1.1);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
     }
 
     .note-input {
       width: 100%;
       min-height: 200px;
       padding: 15px;
-      border: 2px solid #e1e5e9;
+      border: 3px solid #000000;
       border-radius: 10px;
       font-size: 14px;
-      font-family: inherit;
+      font-family: 'Comic Sans MS', cursive, sans-serif;
       resize: vertical;
       transition: border-color 0.2s ease;
+      background: rgba(253, 255, 184, 0.9);
+      color: #000000;
+      box-shadow: inset 0 2px 5px rgba(153, 41, 234, 0.3);
     }
 
     .note-input:focus {
       outline: none;
-      border-color: #667eea;
+      border-color: #9929EA;
+      box-shadow: 
+        inset 0 2px 5px rgba(153, 41, 234, 0.4),
+        0 0 0 3px rgba(204, 102, 218, 0.3);
     }
 
     .button-group {
@@ -257,25 +346,33 @@ function createFloatingWidget() {
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s ease;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     }
 
     .btn-primary {
-      background: #667eea;
-      color: white;
+      background: linear-gradient(135deg, #9929EA 0%, #CC66DA 100%);
+      color: #FAEB92;
+      border: 2px solid #000000;
     }
 
     .btn-primary:hover {
-      background: #5a6fd8;
+      background: linear-gradient(135deg, #CC66DA 0%, #9929EA 100%);
+      color: #000000;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(153, 41, 234, 0.5);
     }
 
     .btn-secondary {
-      background: #f8f9fa;
-      color: #333;
-      border: 1px solid #dee2e6;
+      background: #FAEB92;
+      color: #000000;
+      border: 2px solid #000000;
     }
 
     .btn-secondary:hover {
-      background: #e9ecef;
+      background: #CC66DA;
+      color: #000000;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(204, 102, 218, 0.5);
     }
 
     .notes-panel {
@@ -285,12 +382,16 @@ function createFloatingWidget() {
       transform: translateY(-50%);
       width: 280px;
       max-height: 400px;
-      background: white;
+      background: linear-gradient(135deg, #FAEB92 0%, #CC66DA 100%);
       border-radius: 15px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      box-shadow: 
+        0 10px 40px rgba(153, 41, 234, 0.5),
+        0 0 0 3px #000000,
+        0 5px 20px rgba(204, 102, 218, 0.4);
       z-index: 999998;
       transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       overflow: hidden;
+      border: 3px solid #000000;
     }
 
     .notes-panel.open {
@@ -298,43 +399,54 @@ function createFloatingWidget() {
     }
 
     .notes-header {
-      background: #667eea;
-      color: white;
+      background: #FDFFB8;
+      color: #000000;
       padding: 15px;
       font-weight: 600;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+      border-bottom: 3px solid #000000;
     }
 
     .notes-list {
       max-height: 300px;
       overflow-y: auto;
       padding: 10px;
+      background: rgba(0, 0, 0, 0.1);
     }
 
     .note-item {
       padding: 12px;
-      border-bottom: 1px solid #eee;
+      border-bottom: 2px solid #000000;
       cursor: pointer;
-      transition: background 0.2s ease;
+      transition: all 0.2s ease;
+      border-radius: 8px;
+      margin-bottom: 5px;
+      background: rgba(253, 255, 184, 0.4);
+      backdrop-filter: blur(5px);
     }
 
     .note-item:hover {
-      background: #f8f9fa;
+      background: rgba(253, 255, 184, 0.7);
+      transform: translateX(5px);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
     }
 
     .note-preview {
       font-size: 13px;
-      color: #666;
+      color: #000000;
       margin-top: 5px;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
+      font-weight: 500;
     }
 
     .note-date {
       font-size: 11px;
-      color: #999;
+      color: #9929EA;
       margin-top: 5px;
+      font-weight: 600;
     }
 
     @media (max-width: 768px) {
@@ -346,9 +458,162 @@ function createFloatingWidget() {
         right: 5%;
       }
     }
+ 
+
+    /* Sticky Note Styles */
+    .sticky-note {
+      position: fixed;
+      width: 300px;
+      height: 200px;
+      background: #FAEB92;
+      border-radius: 15px 15px 5px 15px;
+      box-shadow: 
+        0 8px 25px rgba(153, 41, 234, 0.6), 
+        0 0 0 3px #000000,
+        0 4px 15px rgba(204, 102, 218, 0.5);
+      z-index: 999997;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      transform: scale(0.8) rotate(-2deg);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 3px solid #000000;
+      backdrop-filter: blur(10px);
+    }
+
+    .sticky-note.open {
+      transform: scale(1) rotate(0deg);
+      opacity: 1;
+    }
+
+    .sticky-note.minimized {
+      height: 40px;
+      overflow: hidden;
+    }
+
+    .sticky-note.minimized .sticky-note-textarea {
+      display: none;
+    }
+
+    .sticky-note.minimized .note-resize-handle {
+      display: none;
+    }
+
+    .sticky-note.pinned {
+      border: 3px solid #9929EA;
+      box-shadow: 
+        0 8px 25px rgba(153, 41, 234, 0.8), 
+        0 0 0 3px rgba(153, 41, 234, 0.5),
+        0 4px 15px rgba(153, 41, 234, 0.6);
+    }
+
+    .sticky-note-header {
+      background: #FDFFB8;
+      padding: 8px 12px;
+      border-radius: 12px 12px 0 0;
+      cursor: move;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 3px solid #000000;
+      user-select: none;
+    }
+
+    .note-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #000000;
+      text-shadow: 0 1px 2px rgba(250, 235, 146, 0.8);
+    }
+
+    .note-controls {
+      display: flex;
+      gap: 4px;
+    }
+
+    .note-control-btn {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #000000;
+      border-radius: 50%;
+      background: #FDFFB8;
+      cursor: pointer;
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      color: #000000;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    }
+
+    .note-control-btn:hover {
+      background: #9929EA;
+      color: #FAEB92;
+      transform: scale(1.1);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+    }
+
+    .sticky-note-textarea {
+      width: calc(100% - 24px);
+      height: calc(100% - 60px);
+      margin: 12px;
+      border: none;
+      background: transparent;
+      resize: none;
+      outline: none;
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      font-size: 14px;
+      color: #000000;
+      line-height: 1.4;
+      placeholder-color: rgba(0, 0, 0, 0.6);
+    }
+
+    .sticky-note-textarea::placeholder {
+      color: rgba(0, 0, 0, 0.6);
+      font-style: italic;
+    }
+
+    .note-resize-handle {
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      width: 12px;
+      height: 12px;
+      cursor: nw-resize;
+      background: linear-gradient(-45deg, transparent 40%, rgba(0, 0, 0, 0.7) 50%, transparent 60%);
+      border-radius: 0 0 3px 0;
+    }
+
+    .note-resize-handle:hover {
+      background: linear-gradient(-45deg, transparent 35%, rgba(153, 41, 234, 0.8) 50%, transparent 65%);
+    }
   `;
   document.head.appendChild(style);
   document.body.appendChild(widget);
+
+  // Setup image loading event listeners
+  const smileyImage = document.getElementById("smiley-image") as HTMLImageElement;
+  const addImage = document.getElementById("add-image") as HTMLImageElement;
+
+  if (smileyImage) {
+    smileyImage.addEventListener("load", () => {
+      console.log("✅ Smiley face image loaded successfully");
+    });
+    smileyImage.addEventListener("error", () => {
+      console.error("❌ Failed to load smiley face image:", smilyFaceUrl);
+      smileyImage.style.display = "none";
+    });
+  }
+
+  if (addImage) {
+    addImage.addEventListener("load", () => {
+      console.log("✅ Add2 image loaded successfully");
+    });
+    addImage.addEventListener("error", () => {
+      console.error("❌ Failed to load add2 image:", add2Url);
+      addImage.style.display = "none";
+    });
+  }
 
   setupWidgetEvents();
 }
@@ -608,58 +873,159 @@ function handleMenuAction(action: string) {
     case "settings":
       openSettingsModal();
       break;
-    case "close":
-      hideWidget();
-      break;
   }
 }
 
 function createNoteEditor(initialText: string = "") {
-  const modal = document.createElement("div");
-  modal.className = "sticky-modal";
-  modal.innerHTML = `
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 class="modal-title">✏️ New Note</h3>
-        <button class="modal-close">×</button>
-      </div>
-      <textarea class="note-input" placeholder="Write your note here..." autofocus>${initialText}</textarea>
-      <div class="button-group">
-        <button class="btn btn-primary save-note">💾 Save Note</button>
-        <button class="btn btn-secondary cancel-note">Cancel</button>
+  createStickyNote(initialText);
+}
+
+function createStickyNote(content: string = "") {
+  const noteId = Date.now().toString();
+  const note = document.createElement("div");
+  note.className = "sticky-note";
+  note.id = `sticky-note-${noteId}`;
+  note.innerHTML = `
+    <div class="sticky-note-header">
+      <span class="note-title">Sticky Note...</span>
+      <div class="note-controls">
+        <button class="note-control-btn pin-btn" title="Pin/Unpin">📌</button>
+        <button class="note-control-btn minimize-btn" title="Minimize">−</button>
+        <button class="note-control-btn close-btn" title="Close">×</button>
       </div>
     </div>
+    <textarea class="sticky-note-textarea" placeholder="Write your note here...">${content}</textarea>
+    <div class="note-resize-handle"></div>
   `;
 
-  document.body.appendChild(modal);
-  setTimeout(() => modal.classList.add("open"), 10);
+  document.body.appendChild(note);
 
-  const closeBtn = modal.querySelector(".modal-close");
-  const saveBtn = modal.querySelector(".save-note");
-  const cancelBtn = modal.querySelector(".cancel-note");
-  const textarea = modal.querySelector(".note-input") as HTMLTextAreaElement;
-
-  function closeModal() {
-    modal.classList.remove("open");
-    setTimeout(() => modal.remove(), 300);
+  // Position the note near the widget but not overlapping
+  const widget = document.getElementById("sticky-note-widget");
+  if (widget) {
+    const widgetRect = widget.getBoundingClientRect();
+    note.style.left = Math.max(20, widgetRect.left - 320) + "px";
+    note.style.top = Math.max(20, widgetRect.top) + "px";
+  } else {
+    note.style.left = "100px";
+    note.style.top = "100px";
   }
 
-  closeBtn?.addEventListener("click", closeModal);
-  cancelBtn?.addEventListener("click", closeModal);
+  setTimeout(() => note.classList.add("open"), 10);
 
-  saveBtn?.addEventListener("click", () => {
-    const content = textarea.value.trim();
-    if (content) {
-      saveNote(content);
-      closeModal();
+  setupStickyNoteEvents(note, noteId);
+  return note;
+}
+
+function setupStickyNoteEvents(note: HTMLElement, noteId: string) {
+  const header = note.querySelector(".sticky-note-header") as HTMLElement;
+  const textarea = note.querySelector(".sticky-note-textarea") as HTMLTextAreaElement;
+  const closeBtn = note.querySelector(".close-btn");
+  const minimizeBtn = note.querySelector(".minimize-btn");
+  const pinBtn = note.querySelector(".pin-btn");
+  const resizeHandle = note.querySelector(".note-resize-handle") as HTMLElement;
+
+  let isDragging = false;
+  let isResizing = false;
+  let dragOffset = { x: 0, y: 0 };
+  let isPinned = false;
+  let isMinimized = false;
+
+  // Auto-save functionality
+  let saveTimeout: NodeJS.Timeout;
+  textarea.addEventListener("input", () => {
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => {
+      saveNote(textarea.value.trim());
+    }, 1000); // Auto-save after 1 second of no typing
+  });
+
+  // Dragging functionality
+  header.addEventListener("mousedown", (e) => {
+    if ((e.target as HTMLElement).classList.contains("note-control-btn")) return;
+
+    isDragging = true;
+    const rect = note.getBoundingClientRect();
+    dragOffset.x = e.clientX - rect.left;
+    dragOffset.y = e.clientY - rect.top;
+
+    document.addEventListener("mousemove", handleDrag);
+    document.addEventListener("mouseup", stopDrag);
+    e.preventDefault();
+  });
+
+  function handleDrag(e: MouseEvent) {
+    if (!isDragging) return;
+
+    const newX = e.clientX - dragOffset.x;
+    const newY = e.clientY - dragOffset.y;
+
+    // Constrain to viewport
+    const maxX = window.innerWidth - note.offsetWidth;
+    const maxY = window.innerHeight - note.offsetHeight;
+
+    note.style.left = Math.max(0, Math.min(maxX, newX)) + "px";
+    note.style.top = Math.max(0, Math.min(maxY, newY)) + "px";
+  }
+
+  function stopDrag() {
+    isDragging = false;
+    document.removeEventListener("mousemove", handleDrag);
+    document.removeEventListener("mouseup", stopDrag);
+  }
+
+  // Resizing functionality
+  resizeHandle.addEventListener("mousedown", (e) => {
+    isResizing = true;
+    document.addEventListener("mousemove", handleResize);
+    document.addEventListener("mouseup", stopResize);
+    e.preventDefault();
+  });
+
+  function handleResize(e: MouseEvent) {
+    if (!isResizing) return;
+
+    const rect = note.getBoundingClientRect();
+    const newWidth = Math.max(200, e.clientX - rect.left);
+    const newHeight = Math.max(150, e.clientY - rect.top);
+
+    note.style.width = newWidth + "px";
+    note.style.height = newHeight + "px";
+  }
+
+  function stopResize() {
+    isResizing = false;
+    document.removeEventListener("mousemove", handleResize);
+    document.removeEventListener("mouseup", stopResize);
+  }
+
+  // Control buttons
+  closeBtn?.addEventListener("click", () => {
+    note.classList.remove("open");
+    setTimeout(() => note.remove(), 300);
+  });
+
+  minimizeBtn?.addEventListener("click", () => {
+    isMinimized = !isMinimized;
+    if (isMinimized) {
+      note.classList.add("minimized");
+      (minimizeBtn as HTMLElement).textContent = "+";
+      (minimizeBtn as HTMLElement).title = "Restore";
+    } else {
+      note.classList.remove("minimized");
+      (minimizeBtn as HTMLElement).textContent = "−";
+      (minimizeBtn as HTMLElement).title = "Minimize";
     }
   });
 
-  // ESC to close
-  document.addEventListener("keydown", function escHandler(e) {
-    if (e.key === "Escape") {
-      closeModal();
-      document.removeEventListener("keydown", escHandler);
+  pinBtn?.addEventListener("click", () => {
+    isPinned = !isPinned;
+    if (isPinned) {
+      note.classList.add("pinned");
+      (pinBtn as HTMLElement).style.background = "#4CAF50";
+    } else {
+      note.classList.remove("pinned");
+      (pinBtn as HTMLElement).style.background = "";
     }
   });
 }
@@ -702,20 +1068,22 @@ function openSettingsModal() {
         <h3 class="modal-title">⚙️ Settings</h3>
         <button class="modal-close">×</button>
       </div>
-      <div style="line-height: 1.6;">
-        <h4>🎮 Keyboard Shortcuts</h4>
-        <p><strong>Cmd/Ctrl + Shift + S:</strong> Create new note</p>
-        <p><strong>Cmd/Ctrl + Shift + W:</strong> Toggle widget visibility</p>
+      <div style="line-height: 1.6; color: #000000;">
+        <h4 style="color: #000000; text-shadow: 0 1px 2px rgba(250, 235, 146, 0.8);">🎮 Keyboard Shortcuts</h4>
+        <p><strong>Alt + Shift + N:</strong> Create new note</p>
+        <p><strong>Alt + Shift + W:</strong> Toggle widget visibility</p>
         <p><strong>ESC:</strong> Close modals</p>
         
-        <h4 style="margin-top: 25px;">ℹ️ About</h4>
-        <p><strong>StickyNoteAI v2.0</strong></p>
+        <h4 style="margin-top: 25px; color: #000000; text-shadow: 0 1px 2px rgba(250, 235, 146, 0.8);">ℹ️ About</h4>
+        <p><strong>StickyNoteAI v2.3</strong></p>
         <p>Smart floating notes for any webpage</p>
         
-        <h4 style="margin-top: 25px;">🎯 Usage Tips</h4>
+        <h4 style="margin-top: 25px; color: #000000; text-shadow: 0 1px 2px rgba(250, 235, 146, 0.8);">🎯 Usage Tips</h4>
         <p>• Hover over the ✨ button to see menu</p>
         <p>• Click and drag to move the widget</p>
         <p>• Use keyboard shortcuts for quick access</p>
+        <p>• Notes auto-save as you type</p>
+        <p>• Pin notes to keep them visible</p>
       </div>
       <div class="button-group">
         <button class="btn btn-secondary close-settings">Close</button>
@@ -739,12 +1107,33 @@ function hideWidget() {
   if (widget) {
     widget.style.display = "none";
   }
+  // Hide all sticky notes
+  const stickyNotes = document.querySelectorAll(".sticky-note");
+  stickyNotes.forEach((note) => {
+    (note as HTMLElement).style.display = "none";
+  });
 }
 
 function showWidget() {
   if (widget) {
     widget.style.display = "block";
   }
+  // Show all sticky notes
+  const stickyNotes = document.querySelectorAll(".sticky-note");
+  stickyNotes.forEach((note) => {
+    (note as HTMLElement).style.display = "block";
+  });
+}
+
+function isWidgetVisible(): boolean {
+  if (!widget) return false;
+
+  // Check if display is explicitly set to none
+  if (widget.style.display === "none") return false;
+
+  // Check computed style if style.display is not set
+  const computedStyle = window.getComputedStyle(widget);
+  return computedStyle.display !== "none";
 }
 
 async function saveNote(content: string) {
@@ -782,7 +1171,8 @@ async function refreshNotesList() {
     const notes = result.stickyNotes || [];
 
     if (notes.length === 0) {
-      notesList.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No notes yet</div>';
+      notesList.innerHTML =
+        '<div style="padding: 20px; text-align: center; color: #000000; font-weight: 500;">📝 No notes yet<br><small style="color: #9929EA;">Create your first note!</small></div>';
       return;
     }
 
@@ -891,9 +1281,56 @@ async function deleteNote(noteId: string) {
 }
 
 function setupKeyboardShortcuts() {
-  // Keyboard shortcuts are now handled by the background script via commands API
-  // This function is kept for future local keyboard shortcuts if needed
-  console.log("StickyNoteAI: Keyboard shortcuts delegated to background script");
+  // Local keyboard shortcut handlers using Alt+Shift combinations
+  document.addEventListener("keydown", (e) => {
+    // Use Alt+Shift combinations to avoid conflicts with browser shortcuts
+    if (e.altKey && e.shiftKey) {
+      if (e.code === "KeyN") {
+        // Alt+Shift+N: Create new note
+        e.preventDefault();
+        console.log("StickyNoteAI: Alt+Shift+N pressed - Creating new note");
+        createNoteEditor();
+      } else if (e.code === "KeyW") {
+        // Alt+Shift+W: Toggle widget visibility
+        e.preventDefault();
+        console.log("StickyNoteAI: Alt+Shift+W pressed - Toggling widget visibility");
+        if (isWidgetVisible()) {
+          hideWidget();
+        } else {
+          showWidget();
+        }
+      }
+    }
+
+    // ESC key to close modals and notes
+    if (e.code === "Escape") {
+      // Close any open modals
+      const openModal = document.querySelector(".sticky-modal.open");
+      if (openModal) {
+        e.preventDefault();
+        openModal.classList.remove("open");
+        setTimeout(() => openModal.remove(), 300);
+        return;
+      }
+
+      // Close notes panel
+      const notesPanel = document.querySelector(".notes-panel.open");
+      if (notesPanel) {
+        e.preventDefault();
+        notesPanel.classList.remove("open");
+        return;
+      }
+
+      // Close widget menu
+      if (isMenuOpen) {
+        e.preventDefault();
+        closeMenu();
+        return;
+      }
+    }
+  });
+
+  console.log("StickyNoteAI: Local keyboard shortcuts initialized (Alt+Shift+N, Alt+Shift+W, Esc)");
 }
 
 function setupMessageListener() {
@@ -902,14 +1339,16 @@ function setupMessageListener() {
 
     // Handle keyboard shortcut commands from background script
     if (message.action === "toggle-widget") {
-      const widget = document.getElementById("sticky-note-widget");
-      if (widget) {
-        if (widget.style.display === "none") {
-          showWidget();
-        } else {
-          hideWidget();
-        }
+      console.log("StickyNoteAI: Toggle widget command received");
+
+      if (isWidgetVisible()) {
+        console.log("StickyNoteAI: Hiding widget");
+        hideWidget();
+      } else {
+        console.log("StickyNoteAI: Showing widget");
+        showWidget();
       }
+
       sendResponse({ success: true });
       return;
     }

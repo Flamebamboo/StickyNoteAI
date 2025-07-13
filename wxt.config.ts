@@ -15,7 +15,7 @@ export default defineConfig({
     },
     web_accessible_resources: [
       {
-        resources: ["assets/*"],
+        resources: ["assets/*", "smilyface.gif", "add2.png"],
         matches: ["<all_urls>"],
       },
     ],
