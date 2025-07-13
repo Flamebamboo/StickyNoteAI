@@ -1,7 +1,7 @@
 export default defineContentScript({
   matches: ["<all_urls>"],
   main() {
-    console.log("StickyNoteAI: Initializing...");
+    console.log("🎯 StickyNoteAI v2.0 NEW CIRCULAR UI - Loading...");
 
     // Wait for DOM to be ready
     if (document.readyState === "loading") {
@@ -14,1101 +14,821 @@ export default defineContentScript({
   },
 });
 
+let widget: HTMLElement | null = null;
+let isDragging = false;
+let isMenuOpen = false;
+let dragOffset = { x: 0, y: 0 };
+let lastPosition = { x: 0, y: 0 };
+
 function initializeWidget() {
   console.log("StickyNoteAI: DOM ready, creating widget...");
-
-  // Simple test to confirm content script is running
-  console.log("StickyNoteAI: Content script is running on:", window.location.href);
-
   createFloatingWidget();
+  loadWidgetPosition();
+  setupKeyboardShortcuts();
+  setupMessageListener();
+}
 
-  // Initialize widget position and notes list after creation
-  setTimeout(() => {
-    loadWidgetPosition();
+function createFloatingWidget() {
+  // Remove existing widget if any
+  const existingWidget = document.getElementById("sticky-note-widget");
+  if (existingWidget) {
+    existingWidget.remove();
+  }
+
+  // Create main widget container
+  widget = document.createElement("div");
+  widget.id = "sticky-note-widget";
+  widget.innerHTML = `
+    <div class="widget-main-button" id="main-button">
+      ✨
+    </div>
+    <div class="widget-menu" id="widget-menu">
+      <div class="menu-button add-button" data-action="add">➕</div>
+      <div class="menu-button notes-button" data-action="notes">📋</div>
+      <div class="menu-button settings-button" data-action="settings">⚙️</div>
+      <div class="menu-button close-button" data-action="close">❌</div>
+    </div>
+  `;
+
+  // Add styles
+  const style = document.createElement("style");
+  style.textContent = `
+    #sticky-note-widget {
+      position: fixed;
+      top: 50px;
+      right: 50px;
+      z-index: 999999;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      user-select: none;
+      pointer-events: auto;
+    }
+
+    .widget-main-button {
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      position: relative;
+    }
+
+    .widget-main-button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .widget-main-button.dragging {
+      cursor: grabbing !important;
+      transform: scale(0.95);
+      box-shadow: 0 8px 30px rgba(102, 126, 234, 0.5);
+    }
+
+    .widget-menu {
+      position: absolute;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+    }
+
+    .widget-menu.open {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .menu-button {
+      width: 40px;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(10px);
+      transform: translateY(-10px);
+      opacity: 0;
+    }
+
+    .widget-menu.open .menu-button {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .widget-menu.open .menu-button:nth-child(1) { transition-delay: 0.05s; }
+    .widget-menu.open .menu-button:nth-child(2) { transition-delay: 0.1s; }
+    .widget-menu.open .menu-button:nth-child(3) { transition-delay: 0.15s; }
+    .widget-menu.open .menu-button:nth-child(4) { transition-delay: 0.2s; }
+
+    .menu-button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .close-button:hover {
+      background: rgba(255, 107, 107, 0.9) !important;
+      color: white;
+    }
+
+    /* Modal styles */
+    .sticky-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .sticky-modal.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      transform: scale(0.9);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .sticky-modal.open .modal-content {
+      transform: scale(1);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #999;
+      padding: 5px;
+      border-radius: 50%;
+      transition: all 0.2s ease;
+    }
+
+    .modal-close:hover {
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    .note-input {
+      width: 100%;
+      min-height: 200px;
+      padding: 15px;
+      border: 2px solid #e1e5e9;
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: inherit;
+      resize: vertical;
+      transition: border-color 0.2s ease;
+    }
+
+    .note-input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #5a6fd8;
+    }
+
+    .btn-secondary {
+      background: #f8f9fa;
+      color: #333;
+      border: 1px solid #dee2e6;
+    }
+
+    .btn-secondary:hover {
+      background: #e9ecef;
+    }
+
+    .notes-panel {
+      position: fixed;
+      top: 50%;
+      right: -300px;
+      transform: translateY(-50%);
+      width: 280px;
+      max-height: 400px;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      z-index: 999998;
+      transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+    }
+
+    .notes-panel.open {
+      right: 20px;
+    }
+
+    .notes-header {
+      background: #667eea;
+      color: white;
+      padding: 15px;
+      font-weight: 600;
+    }
+
+    .notes-list {
+      max-height: 300px;
+      overflow-y: auto;
+      padding: 10px;
+    }
+
+    .note-item {
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .note-item:hover {
+      background: #f8f9fa;
+    }
+
+    .note-preview {
+      font-size: 13px;
+      color: #666;
+      margin-top: 5px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .note-date {
+      font-size: 11px;
+      color: #999;
+      margin-top: 5px;
+    }
+
+    @media (max-width: 768px) {
+      .notes-panel {
+        width: 90%;
+        right: -100%;
+      }
+      .notes-panel.open {
+        right: 5%;
+      }
+    }
+  `;
+
+  document.head.appendChild(style);
+  document.body.appendChild(widget);
+
+  setupWidgetEvents();
+}
+
+function setupWidgetEvents() {
+  const mainButton = document.getElementById("main-button");
+  const menu = document.getElementById("widget-menu");
+
+  if (!mainButton || !menu) return;
+
+  let dragStartTime = 0;
+  let startPosition = { x: 0, y: 0 };
+  let hasMovedWhileDragging = false;
+
+  // Mouse events for main button
+  mainButton.addEventListener("mousedown", (e) => {
+    e.preventDefault();
+    dragStartTime = Date.now();
+    startPosition = { x: e.clientX, y: e.clientY };
+    hasMovedWhileDragging = false;
+    
+    const rect = widget!.getBoundingClientRect();
+    dragOffset.x = e.clientX - rect.left;
+    dragOffset.y = e.clientY - rect.top;
+    
+    mainButton.classList.add("dragging");
+    
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  });
+
+  // Hover events for menu
+  mainButton.addEventListener("mouseenter", () => {
+    if (!isDragging) {
+      openMenu();
+    }
+  });
+
+  widget?.addEventListener("mouseleave", () => {
+    if (!isDragging) {
+      closeMenu();
+    }
+  });
+
+  function handleMouseMove(e: MouseEvent) {
+    const timeDiff = Date.now() - dragStartTime;
+    const distance = Math.sqrt(
+      Math.pow(e.clientX - startPosition.x, 2) + 
+      Math.pow(e.clientY - startPosition.y, 2)
+    );
+
+    // Start dragging if moved > 3px or held for > 100ms
+    if (!isDragging && (distance > 3 || timeDiff > 100)) {
+      isDragging = true;
+      hasMovedWhileDragging = true;
+      closeMenu();
+      document.body.style.cursor = "grabbing";
+    }
+
+    if (isDragging) {
+      const newX = e.clientX - dragOffset.x;
+      const newY = e.clientY - dragOffset.y;
+      
+      // Use transform for smoother movement
+      widget!.style.transform = `translate(${newX}px, ${newY}px)`;
+      widget!.style.left = "0";
+      widget!.style.top = "0";
+      
+      lastPosition = { x: newX, y: newY };
+    }
+  }
+
+  function handleMouseUp() {
+    document.removeEventListener("mousemove", handleMouseMove);
+    document.removeEventListener("mouseup", handleMouseUp);
+    
+    mainButton.classList.remove("dragging");
+    document.body.style.cursor = "";
+    
+    if (isDragging) {
+      // Apply final position
+      widget!.style.left = lastPosition.x + "px";
+      widget!.style.top = lastPosition.y + "px";
+      widget!.style.transform = "";
+      saveWidgetPosition();
+    }
+    
+    isDragging = false;
+    
+    // Open menu after drag if not moved much
+    setTimeout(() => {
+      if (!hasMovedWhileDragging) {
+        openMenu();
+      }
+    }, 50);
+  }
+
+  // Menu button clicks
+  menu?.addEventListener("click", (e) => {
+    const target = e.target as HTMLElement;
+    const action = target.dataset.action;
+    
+    if (action) {
+      handleMenuAction(action);
+      closeMenu();
+    }
+  });
+}
+
+function openMenu() {
+  if (isDragging) return;
+  const menu = document.getElementById("widget-menu");
+  if (menu) {
+    menu.classList.add("open");
+    isMenuOpen = true;
+  }
+}
+
+function closeMenu() {
+  const menu = document.getElementById("widget-menu");
+  if (menu) {
+    menu.classList.remove("open");
+    isMenuOpen = false;
+  }
+}
+
+function handleMenuAction(action: string) {
+  switch (action) {
+    case "add":
+      createNoteEditor();
+      break;
+    case "notes":
+      toggleNotesPanel();
+      break;
+    case "settings":
+      openSettingsModal();
+      break;
+    case "close":
+      hideWidget();
+      break;
+  }
+}
+
+function createNoteEditor() {
+  const modal = document.createElement("div");
+  modal.className = "sticky-modal";
+  modal.innerHTML = `
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">✏️ New Note</h3>
+        <button class="modal-close">×</button>
+      </div>
+      <textarea class="note-input" placeholder="Write your note here..." autofocus></textarea>
+      <div class="button-group">
+        <button class="btn btn-primary save-note">💾 Save Note</button>
+        <button class="btn btn-secondary cancel-note">Cancel</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  setTimeout(() => modal.classList.add("open"), 10);
+
+  const closeBtn = modal.querySelector(".modal-close");
+  const saveBtn = modal.querySelector(".save-note");
+  const cancelBtn = modal.querySelector(".cancel-note");
+  const textarea = modal.querySelector(".note-input") as HTMLTextAreaElement;
+
+  function closeModal() {
+    modal.classList.remove("open");
+    setTimeout(() => modal.remove(), 300);
+  }
+
+  closeBtn?.addEventListener("click", closeModal);
+  cancelBtn?.addEventListener("click", closeModal);
+  
+  saveBtn?.addEventListener("click", () => {
+    const content = textarea.value.trim();
+    if (content) {
+      saveNote(content);
+      closeModal();
+    }
+  });
+
+  // ESC to close
+  document.addEventListener("keydown", function escHandler(e) {
+    if (e.key === "Escape") {
+      closeModal();
+      document.removeEventListener("keydown", escHandler);
+    }
+  });
+}
+
+function toggleNotesPanel() {
+  let panel = document.querySelector(".notes-panel") as HTMLElement;
+  
+  if (!panel) {
+    panel = document.createElement("div");
+    panel.className = "notes-panel";
+    panel.innerHTML = `
+      <div class="notes-header">📋 Recent Notes</div>
+      <div class="notes-list" id="notes-list"></div>
+    `;
+    document.body.appendChild(panel);
     refreshNotesList();
-  }, 100);
+  }
 
-  // Listen for messages from background script
+  panel.classList.toggle("open");
+  
+  if (panel.classList.contains("open")) {
+    refreshNotesList();
+    setTimeout(() => {
+      document.addEventListener("click", function outsideClickHandler(e) {
+        if (!panel.contains(e.target as Node)) {
+          panel.classList.remove("open");
+          document.removeEventListener("click", outsideClickHandler);
+        }
+      });
+    }, 100);
+  }
+}
+
+function openSettingsModal() {
+  const modal = document.createElement("div");
+  modal.className = "sticky-modal";
+  modal.innerHTML = `
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">⚙️ Settings</h3>
+        <button class="modal-close">×</button>
+      </div>
+      <div style="line-height: 1.6;">
+        <h4>🎮 Keyboard Shortcuts</h4>
+        <p><strong>Cmd/Ctrl + Shift + S:</strong> Create new note</p>
+        <p><strong>Cmd/Ctrl + Shift + W:</strong> Toggle widget visibility</p>
+        <p><strong>ESC:</strong> Close modals</p>
+        
+        <h4 style="margin-top: 25px;">ℹ️ About</h4>
+        <p><strong>StickyNoteAI v2.0</strong></p>
+        <p>Smart floating notes for any webpage</p>
+        
+        <h4 style="margin-top: 25px;">🎯 Usage Tips</h4>
+        <p>• Hover over the ✨ button to see menu</p>
+        <p>• Click and drag to move the widget</p>
+        <p>• Use keyboard shortcuts for quick access</p>
+      </div>
+      <div class="button-group">
+        <button class="btn btn-secondary close-settings">Close</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  setTimeout(() => modal.classList.add("open"), 10);
+
+  function closeModal() {
+    modal.classList.remove("open");
+    setTimeout(() => modal.remove(), 300);
+  }
+
+  modal.querySelector(".modal-close")?.addEventListener("click", closeModal);
+  modal.querySelector(".close-settings")?.addEventListener("click", closeModal);
+}
+
+function hideWidget() {
+  if (widget) {
+    widget.style.display = "none";
+  }
+}
+
+function showWidget() {
+  if (widget) {
+    widget.style.display = "block";
+  }
+}
+
+async function saveNote(content: string) {
+  try {
+    const result = await browser.storage.local.get("stickyNotes");
+    const notes = result.stickyNotes || [];
+    
+    const newNote = {
+      id: Date.now().toString(),
+      content,
+      timestamp: new Date().toISOString(),
+      url: window.location.href
+    };
+    
+    notes.unshift(newNote);
+    
+    // Keep only last 50 notes
+    if (notes.length > 50) {
+      notes.splice(50);
+    }
+    
+    await browser.storage.local.set({ stickyNotes: notes });
+    console.log("Note saved successfully");
+  } catch (error) {
+    console.error("Error saving note:", error);
+  }
+}
+
+async function refreshNotesList() {
+  const notesList = document.getElementById("notes-list");
+  if (!notesList) return;
+
+  try {
+    const result = await browser.storage.local.get("stickyNotes");
+    const notes = result.stickyNotes || [];
+    
+    if (notes.length === 0) {
+      notesList.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No notes yet</div>';
+      return;
+    }
+    
+    notesList.innerHTML = notes.slice(0, 10).map((note: any) => `
+      <div class="note-item" data-note-id="${note.id}">
+        <div class="note-preview">${note.content.substring(0, 100)}${note.content.length > 100 ? '...' : ''}</div>
+        <div class="note-date">${new Date(note.timestamp).toLocaleDateString()}</div>
+      </div>
+    `).join("");
+    
+    // Click to edit note
+    notesList.querySelectorAll(".note-item").forEach(item => {
+      item.addEventListener("click", () => {
+        const noteId = (item as HTMLElement).dataset.noteId;
+        const note = notes.find((n: any) => n.id === noteId);
+        if (note) {
+          editNote(note);
+        }
+      });
+    });
+  } catch (error) {
+    console.error("Error loading notes:", error);
+  }
+}
+
+function editNote(note: any) {
+  const modal = document.createElement("div");
+  modal.className = "sticky-modal";
+  modal.innerHTML = `
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">✏️ Edit Note</h3>
+        <button class="modal-close">×</button>
+      </div>
+      <textarea class="note-input" autofocus>${note.content}</textarea>
+      <div class="button-group">
+        <button class="btn btn-primary update-note">💾 Update Note</button>
+        <button class="btn" style="background: #dc3545; color: white;" id="delete-note">🗑️ Delete</button>
+        <button class="btn btn-secondary cancel-edit">Cancel</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  setTimeout(() => modal.classList.add("open"), 10);
+
+  const textarea = modal.querySelector(".note-input") as HTMLTextAreaElement;
+  
+  function closeModal() {
+    modal.classList.remove("open");
+    setTimeout(() => modal.remove(), 300);
+  }
+
+  modal.querySelector(".modal-close")?.addEventListener("click", closeModal);
+  modal.querySelector(".cancel-edit")?.addEventListener("click", closeModal);
+  
+  modal.querySelector(".update-note")?.addEventListener("click", async () => {
+    const content = textarea.value.trim();
+    if (content) {
+      await updateNote(note.id, content);
+      refreshNotesList();
+      closeModal();
+    }
+  });
+
+  modal.querySelector("#delete-note")?.addEventListener("click", async () => {
+    if (confirm("Are you sure you want to delete this note?")) {
+      await deleteNote(note.id);
+      refreshNotesList();
+      closeModal();
+    }
+  });
+}
+
+async function updateNote(noteId: string, newContent: string) {
+  try {
+    const result = await browser.storage.local.get("stickyNotes");
+    const notes = result.stickyNotes || [];
+    
+    const noteIndex = notes.findIndex((note: any) => note.id === noteId);
+    if (noteIndex !== -1) {
+      notes[noteIndex].content = newContent;
+      notes[noteIndex].timestamp = new Date().toISOString();
+      await browser.storage.local.set({ stickyNotes: notes });
+    }
+  } catch (error) {
+    console.error("Error updating note:", error);
+  }
+}
+
+async function deleteNote(noteId: string) {
+  try {
+    const result = await browser.storage.local.get("stickyNotes");
+    const notes = result.stickyNotes || [];
+    
+    const filteredNotes = notes.filter((note: any) => note.id !== noteId);
+    await browser.storage.local.set({ stickyNotes: filteredNotes });
+  } catch (error) {
+    console.error("Error deleting note:", error);
+  }
+}
+
+function setupKeyboardShortcuts() {
+  document.addEventListener("keydown", (e) => {
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const modifierKey = isMac ? e.metaKey : e.ctrlKey;
+
+    if (modifierKey && e.shiftKey) {
+      if (e.code === "KeyS") {
+        e.preventDefault();
+        createNoteEditor();
+      } else if (e.code === "KeyW") {
+        e.preventDefault();
+        const widget = document.getElementById("sticky-note-widget");
+        if (widget) {
+          if (widget.style.display === "none") {
+            showWidget();
+          } else {
+            hideWidget();
+          }
+        }
+      }
+    }
+  });
+}
+
+function setupMessageListener() {
   browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log("StickyNoteAI: Received message:", message);
 
     if (message.action === "toggle-widget") {
       const widget = document.getElementById("sticky-note-widget");
       if (widget) {
-        widget.style.display = widget.style.display === "none" ? "block" : "none";
-        console.log("StickyNoteAI: Widget toggled via command");
+        if (widget.style.display === "none") {
+          showWidget();
+        } else {
+          hideWidget();
+        }
       }
     } else if (message.action === "new-note") {
       createNoteEditor();
-      console.log("StickyNoteAI: Note editor opened via command");
     }
 
     sendResponse({ success: true });
   });
 }
 
-function createFloatingWidget() {
-  console.log("StickyNoteAI: Creating floating widget...");
-
-  // Check if widget already exists
-  if (document.getElementById("sticky-note-widget")) {
-    console.log("StickyNoteAI: Widget already exists");
-    return;
-  }
-
-  // Check if we can access document.body
-  if (!document.body) {
-    console.log("StickyNoteAI: document.body not available, retrying...");
-    setTimeout(() => createFloatingWidget(), 100);
-    return;
-  } // Create the main widget container
-  const widget = document.createElement("div");
-  widget.id = "sticky-note-widget";
-  widget.style.cssText = `
-    position: fixed !important;
-    top: 20px !important;
-    right: 20px !important;
-    width: 60px !important;
-    height: 60px !important;
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.9), rgba(168, 85, 247, 0.9)) !important;
-    backdrop-filter: blur(20px) !important;
-    -webkit-backdrop-filter: blur(20px) !important;
-    border: 2px solid rgba(255, 255, 255, 0.3) !important;
-    border-radius: 50% !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2) !important;
-    z-index: 999999 !important;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-    font-size: 14px !important;
-    cursor: move !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    overflow: visible !important;
-    user-select: none !important;
-    -webkit-user-select: none !important;
-    -moz-user-select: none !important;
-    -ms-user-select: none !important;
-  `;
-
-  widget.innerHTML = `
-    <div class="widget-circle" style="
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      position: relative;
-      z-index: 2;
-    ">
-      <span class="widget-icon" style="
-        font-size: 24px; 
-        color: white; 
-        filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
-        pointer-events: none;
-      ">✨</span>
-    </div>
-    <div class="widget-expanded" style="
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 280px;
-      height: auto;
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 16px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-      opacity: 0;
-      visibility: hidden;
-      transform: translateX(20px);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      pointer-events: none;
-      z-index: 1;
-    ">
-      <div class="widget-header" style="
-        display: flex; 
-        align-items: center; 
-        padding: 16px 20px; 
-        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1)); 
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
-        gap: 12px;
-        backdrop-filter: blur(10px);
-      ">
-        <span class="widget-icon-header" style="font-size: 18px; flex: 1; color: #6366f1; filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.3));">✨</span>
-        <button class="btn-add" title="Add Note" style="
-          background: linear-gradient(135deg, #10b981, #059669); 
-          border: none; 
-          padding: 8px 12px; 
-          border-radius: 8px; 
-          cursor: pointer; 
-          font-size: 12px; 
-          font-weight: 600; 
-          color: white;
-          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-          transition: all 0.2s ease;
-          pointer-events: auto;
-        ">+ Add</button>
-        <button class="btn-menu" title="Menu" style="
-          background: rgba(255, 255, 255, 0.1); 
-          border: 1px solid rgba(255, 255, 255, 0.2); 
-          padding: 8px; 
-          border-radius: 8px; 
-          cursor: pointer; 
-          font-size: 14px; 
-          font-weight: bold; 
-          color: #64748b;
-          transition: all 0.2s ease;
-          width: 32px;
-          height: 32px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          pointer-events: auto;
-        ">≡</button>
-        <button class="btn-hide" title="Hide" style="
-          background: rgba(255, 255, 255, 0.1); 
-          border: 1px solid rgba(255, 255, 255, 0.2); 
-          padding: 8px; 
-          border-radius: 8px; 
-          cursor: pointer; 
-          font-size: 14px; 
-          font-weight: bold; 
-          color: #ef4444;
-          transition: all 0.2s ease;
-          width: 32px;
-          height: 32px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          pointer-events: auto;
-        ">×</button>
-      </div>
-      <div class="widget-body" style="
-        display: none; 
-        padding: 20px; 
-        max-height: 400px; 
-        overflow-y: auto;
-        background: rgba(255, 255, 255, 0.05);
-        pointer-events: auto;
-      ">
-        <div class="notes-list" style="display: flex; flex-direction: column; gap: 12px;">
-          <div class="no-notes" style="
-            color: #64748b; 
-            font-style: italic; 
-            text-align: center; 
-            padding: 32px 16px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            border: 1px dashed rgba(255, 255, 255, 0.2);
-          ">
-            <div style="font-size: 24px; margin-bottom: 8px;">📝</div>
-            <div style="font-size: 13px; color: #94a3b8;">No notes yet</div>
-            <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Click + Add to create your first note</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-
-  // Add styles (still useful for hover effects)
-  addWidgetStyles();
-
-  // Make widget draggable
-  makeDraggable(widget);
-
-  // Add event listeners
-  addWidgetEventListeners(widget);
-
-  // Insert widget into page
-  document.body.appendChild(widget);
-
-  console.log("StickyNoteAI: Widget created successfully and added to DOM");
-
-  // Force visibility
-  widget.style.display = "block";
-  widget.style.visibility = "visible";
-
-  // Verify widget is in DOM
-  const verifyWidget = document.getElementById("sticky-note-widget");
-  if (verifyWidget) {
-    console.log("StickyNoteAI: Widget verification successful");
-    console.log("Widget position:", verifyWidget.style.top, verifyWidget.style.right);
-  } else {
-    console.error("StickyNoteAI: Widget verification failed!");
-  }
-}
-
-function addWidgetStyles() {
-  if (document.getElementById("sticky-note-styles")) {
-    return;
-  }
-
-  const styles = document.createElement("style");
-  styles.id = "sticky-note-styles";
-  styles.textContent = `
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
-    
-    #sticky-note-widget {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-    }
-
-    /* Prevent text selection on entire widget */
-    #sticky-note-widget * {
-      user-select: none !important;
-      -webkit-user-select: none !important;
-      -moz-user-select: none !important;
-      -ms-user-select: none !important;
-    }
-
-    /* Hover effect for circle widget */
-    #sticky-note-widget:hover {
-      transform: scale(1.1) !important;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3) !important;
-    }
-
-    /* Show expanded widget on hover */
-    #sticky-note-widget:hover .widget-expanded {
-      opacity: 1 !important;
-      visibility: visible !important;
-      transform: translateX(0) !important;
-      pointer-events: auto !important;
-    }
-
-    /* Dragging state */
-    #sticky-note-widget.dragging {
-      transition: none !important;
-    }
-
-    #sticky-note-widget.dragging .widget-expanded {
-      opacity: 0 !important;
-      visibility: hidden !important;
-      pointer-events: none !important;
-    }
-
-    /* Button hover effects */
-    #sticky-note-widget .btn-add:hover {
-      background: linear-gradient(135deg, #059669, #047857) !important;
-      transform: translateY(-1px) !important;
-      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4) !important;
-    }
-
-    #sticky-note-widget .btn-menu:hover,
-    #sticky-note-widget .btn-hide:hover {
-      background: rgba(255, 255, 255, 0.2) !important;
-      transform: translateY(-1px) !important;
-    }
-
-    #sticky-note-widget .note-item {
-      background: rgba(255, 255, 255, 0.1) !important;
-      backdrop-filter: blur(10px) !important;
-      padding: 16px !important;
-      border-radius: 12px !important;
-      border: 1px solid rgba(255, 255, 255, 0.2) !important;
-      cursor: pointer !important;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-      position: relative !important;
-      overflow: hidden !important;
-    }
-
-    #sticky-note-widget .note-item:before {
-      content: '' !important;
-      position: absolute !important;
-      top: 0 !important;
-      left: 0 !important;
-      right: 0 !important;
-      height: 3px !important;
-      background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899) !important;
-      opacity: 0 !important;
-      transition: opacity 0.3s ease !important;
-    }
-
-    #sticky-note-widget .note-item:hover {
-      background: rgba(255, 255, 255, 0.15) !important;
-      transform: translateY(-2px) scale(1.02) !important;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
-    }
-
-    #sticky-note-widget .note-item:hover:before {
-      opacity: 1 !important;
-    }
-
-    #sticky-note-widget .note-title {
-      font-weight: 600 !important;
-      margin-bottom: 8px !important;
-      color: #1e293b !important;
-      font-size: 14px !important;
-      line-height: 1.4 !important;
-    }
-
-    #sticky-note-widget .note-preview {
-      color: #64748b !important;
-      font-size: 12px !important;
-      line-height: 1.5 !important;
-      overflow: hidden !important;
-      display: -webkit-box !important;
-      -webkit-line-clamp: 2 !important;
-      -webkit-box-orient: vertical !important;
-    }
-
-    #sticky-note-widget .note-meta {
-      margin-top: 8px !important;
-      font-size: 10px !important;
-      color: #94a3b8 !important;
-      display: flex !important;
-      align-items: center !important;
-      gap: 4px !important;
-    }
-
-    #sticky-note-widget .note-meta:before {
-      content: '📅' !important;
-      font-size: 8px !important;
-    }
-
-    /* Stealth mode - ultra minimal */
-    #sticky-note-widget.stealth {
-      opacity: 0.3 !important;
-      transform: scale(0.9) !important;
-      transition: all 0.3s ease !important;
-    }
-
-    #sticky-note-widget.stealth:hover {
-      opacity: 1 !important;
-      transform: scale(1.1) !important;
-    }
-
-    /* Animations */
-    @keyframes noteSlideIn {
-      from {
-        opacity: 0;
-        transform: translateX(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(0);
-      }
-    }
-
-    #sticky-note-widget .note-item {
-      animation: noteSlideIn 0.3s ease-out !important;
-    }
-
-    /* Scrollbar styling */
-    #sticky-note-widget .widget-body::-webkit-scrollbar {
-      width: 4px !important;
-    }
-
-    #sticky-note-widget .widget-body::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.1) !important;
-      border-radius: 2px !important;
-    }
-
-    #sticky-note-widget .widget-body::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.3) !important;
-      border-radius: 2px !important;
-    }
-
-    #sticky-note-widget .widget-body::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 255, 255, 0.5) !important;
-    }
-
-    /* Ensure smooth dragging */
-    #sticky-note-widget.dragging * {
-      pointer-events: none !important;
-    }
-  `;
-
-  document.head.appendChild(styles);
-}
-
-function makeDraggable(element: HTMLElement) {
-  let isDragging = false;
-  let currentX = 0;
-  let currentY = 0;
-  let initialX = 0;
-  let initialY = 0;
-  let dragStartTime = 0;
-
-  const circle = element.querySelector(".widget-circle") as HTMLElement;
-
-  // Add event listeners for better drag handling
-  circle.addEventListener("mousedown", dragStart);
-  document.addEventListener("mousemove", drag);
-  document.addEventListener("mouseup", dragEnd);
-
-  // Prevent context menu on right click while dragging
-  element.addEventListener("contextmenu", (e) => {
-    if (isDragging) {
-      e.preventDefault();
-    }
-  });
-
-  // Prevent text selection during drag
-  element.addEventListener("selectstart", (e) => {
-    if (isDragging) {
-      e.preventDefault();
-    }
-  });
-
-  function dragStart(e: MouseEvent) {
-    // Only start dragging on left mouse button
-    if (e.button !== 0) return;
-
-    dragStartTime = Date.now();
-
-    // Prevent default to avoid text selection
-    e.preventDefault();
-
-    initialX = e.clientX - currentX;
-    initialY = e.clientY - currentY;
-
-    isDragging = true;
-
-    // Add dragging class to disable transitions and hide expanded widget
-    element.classList.add("dragging");
-
-    // Change cursor
-    document.body.style.cursor = "grabbing";
-
-    // Disable text selection on entire document
-    document.body.style.userSelect = "none";
-    document.body.style.webkitUserSelect = "none";
-  }
-
-  function drag(e: MouseEvent) {
-    if (isDragging) {
-      e.preventDefault();
-
-      currentX = e.clientX - initialX;
-      currentY = e.clientY - initialY;
-
-      // Keep widget within viewport with some padding
-      const rect = element.getBoundingClientRect();
-      const padding = 10;
-      const maxX = window.innerWidth - rect.width - padding;
-      const maxY = window.innerHeight - rect.height - padding;
-
-      currentX = Math.max(padding, Math.min(currentX, maxX));
-      currentY = Math.max(padding, Math.min(currentY, maxY));
-
-      // Use transform for smoother movement
-      element.style.transform = `translate(${currentX}px, ${currentY}px)`;
-      element.style.left = "0";
-      element.style.top = "0";
-      element.style.right = "auto";
-    }
-  }
-
-  function dragEnd(e: MouseEvent) {
-    if (!isDragging) return;
-
-    isDragging = false;
-
-    // Remove dragging class
-    element.classList.remove("dragging");
-
-    // Reset cursor
-    document.body.style.cursor = "";
-
-    // Re-enable text selection
-    document.body.style.userSelect = "";
-    document.body.style.webkitUserSelect = "";
-
-    // Convert transform to position for persistence
-    element.style.left = currentX + "px";
-    element.style.top = currentY + "px";
-    element.style.transform = "";
-
-    // Save position to storage
-    saveWidgetPosition(currentX, currentY);
-
-    // Check if this was a click vs drag
-    const dragDuration = Date.now() - dragStartTime;
-    if (dragDuration < 200) {
-      // This was likely a click, not a drag
-      const distance = Math.sqrt(Math.pow(e.clientX - (initialX + currentX), 2) + Math.pow(e.clientY - (initialY + currentY), 2));
-
-      if (distance < 5) {
-        // Handle click on circle (could expand or show quick menu)
-        console.log("Circle clicked");
-      }
-    }
-  }
-
-  // Touch events for mobile support
-  circle.addEventListener("touchstart", (e) => {
-    e.preventDefault();
-    const touch = e.touches[0];
-    const mouseEvent = new MouseEvent("mousedown", {
-      clientX: touch.clientX,
-      clientY: touch.clientY,
-      button: 0,
-    });
-    dragStart(mouseEvent);
-  });
-
-  document.addEventListener("touchmove", (e) => {
-    if (isDragging) {
-      e.preventDefault();
-      const touch = e.touches[0];
-      const mouseEvent = new MouseEvent("mousemove", {
-        clientX: touch.clientX,
-        clientY: touch.clientY,
-      });
-      drag(mouseEvent);
-    }
-  });
-
-  document.addEventListener("touchend", (e) => {
-    if (isDragging) {
-      e.preventDefault();
-      const mouseEvent = new MouseEvent("mouseup", {
-        clientX: 0,
-        clientY: 0,
-      });
-      dragEnd(mouseEvent);
-    }
-  });
-}
-
-function addWidgetEventListeners(widget: HTMLElement) {
-  const addBtn = widget.querySelector(".btn-add") as HTMLButtonElement;
-  const menuBtn = widget.querySelector(".btn-menu") as HTMLButtonElement;
-  const hideBtn = widget.querySelector(".btn-hide") as HTMLButtonElement;
-  const widgetBody = widget.querySelector(".widget-body") as HTMLElement;
-  const expandedWidget = widget.querySelector(".widget-expanded") as HTMLElement;
-
-  // Add note button
-  addBtn?.addEventListener("click", (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    createNoteEditor();
-  });
-
-  // Menu button (toggle widget body)
-  menuBtn?.addEventListener("click", (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    const isVisible = widgetBody.style.display !== "none";
-    widgetBody.style.display = isVisible ? "none" : "block";
-    menuBtn.textContent = isVisible ? "≡" : "×";
-  });
-
-  // Hide button - now hides the entire widget
-  hideBtn?.addEventListener("click", (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    widget.style.display = "none";
-  });
-
-  // Keep expanded widget visible when hovering over it
-  expandedWidget?.addEventListener("mouseenter", () => {
-    expandedWidget.style.opacity = "1";
-    expandedWidget.style.visibility = "visible";
-    expandedWidget.style.transform = "translateX(0)";
-    expandedWidget.style.pointerEvents = "auto";
-  });
-
-  // Add slight delay before hiding to prevent flickering
-  let hideTimeout: NodeJS.Timeout | null = null;
-
-  widget.addEventListener("mouseleave", () => {
-    hideTimeout = setTimeout(() => {
-      if (!widget.matches(":hover")) {
-        const expanded = widget.querySelector(".widget-expanded") as HTMLElement;
-        if (expanded) {
-          expanded.style.opacity = "0";
-          expanded.style.visibility = "hidden";
-          expanded.style.transform = "translateX(20px)";
-          expanded.style.pointerEvents = "none";
-        }
-      }
-    }, 100);
-  });
-
-  widget.addEventListener("mouseenter", () => {
-    if (hideTimeout) {
-      clearTimeout(hideTimeout);
-      hideTimeout = null;
-    }
-  });
-
-  // Double-click to hide widget completely
-  widget.addEventListener("dblclick", (e) => {
-    e.preventDefault();
-    widget.style.display = "none";
-  });
-
-  // Keyboard shortcuts (Mac-compatible)
-  document.addEventListener("keydown", (e) => {
-    const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
-    const cmdOrCtrl = isMac ? e.metaKey : e.ctrlKey;
-
-    if (cmdOrCtrl && e.shiftKey && e.key === "W") {
-      e.preventDefault();
-      widget.style.display = widget.style.display === "none" ? "block" : "none";
-    }
-    if (cmdOrCtrl && e.shiftKey && e.key === "S") {
-      e.preventDefault();
-      createNoteEditor();
-    }
-  });
-}
-
-function createNoteEditor() {
-  // Check if editor already exists
-  if (document.getElementById("note-editor-modal")) {
-    return;
-  }
-
-  const modal = document.createElement("div");
-  modal.id = "note-editor-modal";
-  modal.innerHTML = `
-    <div class="modal-backdrop">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>Create Note</h3>
-          <div class="auto-save-indicator">Draft saved</div>
-          <button class="modal-close">×</button>
-        </div>
-        <div class="modal-body">
-          <input type="text" placeholder="Give your note a title..." class="note-title-input">
-          <textarea placeholder="Start writing your thoughts here...
-
-💡 Tips:
-• Use markdown for formatting
-• Notes auto-save as you type
-• Press Esc to close quickly" class="note-content-input"></textarea>
-          <div class="modal-actions">
-            <button class="btn-cancel">Cancel</button>
-            <button class="btn-save">Save Note</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-
-  // Add modal styles
-  addModalStyles();
-
-  // Add event listeners
-  addModalEventListeners(modal);
-
-  document.body.appendChild(modal);
-
-  // Focus on title input
-  const titleInput = modal.querySelector(".note-title-input") as HTMLInputElement;
-  titleInput.focus();
-}
-
-function addModalStyles() {
-  if (document.getElementById("note-modal-styles")) {
-    return;
-  }
-
-  const styles = document.createElement("style");
-  styles.id = "note-modal-styles";
-  styles.textContent = `
-    #note-editor-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 9999999;
-      animation: modalFadeIn 0.3s ease-out;
-    }
-
-    @keyframes modalFadeIn {
-      from {
-        opacity: 0;
-      }
-      to {
-        opacity: 1;
-      }
-    }
-
-    @keyframes modalSlideIn {
-      from {
-        opacity: 0;
-        transform: translateY(20px) scale(0.95);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
-    }
-
-    .modal-backdrop {
-      background: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(8px);
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .modal-content {
-      background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9));
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 20px;
-      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-      width: 100%;
-      max-width: 520px;
-      max-height: 90vh;
-      overflow: hidden;
-      animation: modalSlideIn 0.3s ease-out;
-    }
-
-    .modal-header {
-      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1));
-      padding: 24px 28px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .modal-header h3 {
-      margin: 0;
-      font-size: 20px;
-      font-weight: 600;
-      color: #1e293b;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .modal-header h3:before {
-      content: '✨';
-      font-size: 18px;
-      filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.3));
-    }
-
-    .modal-close {
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      font-size: 20px;
-      cursor: pointer;
-      color: #64748b;
-      padding: 0;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 12px;
-      transition: all 0.2s ease;
-    }
-
-    .modal-close:hover {
-      background: rgba(239, 68, 68, 0.1);
-      border-color: rgba(239, 68, 68, 0.3);
-      color: #ef4444;
-      transform: scale(1.05);
-    }
-
-    .modal-body {
-      padding: 28px;
-    }
-
-    .note-title-input {
-      width: 100%;
-      padding: 16px 20px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: 500;
-      margin-bottom: 16px;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: rgba(255, 255, 255, 0.5);
-      backdrop-filter: blur(10px);
-      color: #1e293b;
-      transition: all 0.2s ease;
-      outline: none;
-    }
-
-    .note-title-input:focus {
-      border-color: rgba(99, 102, 241, 0.5);
-      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
-      background: rgba(255, 255, 255, 0.8);
-    }
-
-    .note-title-input::placeholder {
-      color: #94a3b8;
-    }
-
-    .note-content-input {
-      width: 100%;
-      min-height: 180px;
-      padding: 20px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-radius: 12px;
-      font-size: 14px;
-      line-height: 1.6;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: rgba(255, 255, 255, 0.5);
-      backdrop-filter: blur(10px);
-      color: #1e293b;
-      resize: vertical;
-      margin-bottom: 24px;
-      transition: all 0.2s ease;
-      outline: none;
-    }
-
-    .note-content-input:focus {
-      border-color: rgba(99, 102, 241, 0.5);
-      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
-      background: rgba(255, 255, 255, 0.8);
-    }
-
-    .note-content-input::placeholder {
-      color: #94a3b8;
-    }
-
-    .modal-actions {
-      display: flex;
-      gap: 12px;
-      justify-content: flex-end;
-    }
-
-    .modal-actions button {
-      padding: 12px 24px;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      min-width: 100px;
-      justify-content: center;
-    }
-
-    .btn-save {
-      background: linear-gradient(135deg, #10b981, #059669);
-      color: white;
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-    }
-
-    .btn-save:hover {
-      background: linear-gradient(135deg, #059669, #047857);
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
-    }
-
-    .btn-save:before {
-      content: '💾';
-      font-size: 12px;
-    }
-
-    .btn-cancel {
-      background: rgba(255, 255, 255, 0.1);
-      color: #64748b;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-    }
-
-    .btn-cancel:hover {
-      background: rgba(255, 255, 255, 0.2);
-      border-color: rgba(255, 255, 255, 0.4);
-      color: #475569;
-      transform: translateY(-1px);
-    }
-
-    .btn-cancel:before {
-      content: '✕';
-      font-size: 10px;
-    }
-
-    /* Auto-save indicator */
-    .auto-save-indicator {
-      position: absolute;
-      top: 24px;
-      right: 80px;
-      padding: 6px 12px;
-      background: rgba(16, 185, 129, 0.1);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      border-radius: 20px;
-      font-size: 11px;
-      color: #059669;
-      font-weight: 500;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    .auto-save-indicator.show {
-      opacity: 1;
-    }
-
-    .auto-save-indicator:before {
-      content: '💾';
-      margin-right: 4px;
-      font-size: 10px;
-    }
-  `;
-
-  document.head.appendChild(styles);
-}
-
-function addModalEventListeners(modal: HTMLElement) {
-  const closeBtn = modal.querySelector(".modal-close") as HTMLButtonElement;
-  const saveBtn = modal.querySelector(".btn-save") as HTMLButtonElement;
-  const cancelBtn = modal.querySelector(".btn-cancel") as HTMLButtonElement;
-  const titleInput = modal.querySelector(".note-title-input") as HTMLInputElement;
-  const contentInput = modal.querySelector(".note-content-input") as HTMLTextAreaElement;
-
-  // Close modal
-  closeBtn.addEventListener("click", () => closeModal(modal));
-  cancelBtn.addEventListener("click", () => closeModal(modal));
-
-  // Save note
-  saveBtn.addEventListener("click", () => {
-    const title = titleInput.value.trim() || "Untitled Note";
-    const content = contentInput.value.trim();
-
-    if (content) {
-      saveNote(title, content);
-      closeModal(modal);
-    }
-  });
-
-  // Close on backdrop click
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal.querySelector(".modal-backdrop")) {
-      closeModal(modal);
-    }
-  });
-
-  // Close on Escape key
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      closeModal(modal);
-    }
-  });
-
-  // Auto-save draft every 2 seconds
-  let autoSaveTimer: number;
-  const autoSave = () => {
-    clearTimeout(autoSaveTimer);
-    autoSaveTimer = window.setTimeout(() => {
-      const title = titleInput.value.trim() || "Draft";
-      const content = contentInput.value.trim();
-      if (content) {
-        browser.storage.local.set({ "sticky-note-draft": { title, content } });
-      }
-    }, 2000);
+async function saveWidgetPosition() {
+  if (!widget) return;
+  
+  const rect = widget.getBoundingClientRect();
+  const position = {
+    x: rect.left,
+    y: rect.top
   };
-
-  titleInput.addEventListener("input", autoSave);
-  contentInput.addEventListener("input", autoSave);
-
-  // Load draft if exists
-  browser.storage.local.get("sticky-note-draft", (result) => {
-    const draft = result["sticky-note-draft"];
-    if (draft) {
-      titleInput.value = draft.title;
-      contentInput.value = draft.content;
-    }
-  });
-}
-
-function closeModal(modal: HTMLElement) {
-  modal.remove();
-  browser.storage.local.remove("sticky-note-draft");
-}
-
-function getStoredNotes(): Promise<any[]> {
-  return new Promise((resolve) => {
-    browser.storage.local.get("sticky-notes", (result) => {
-      resolve(result["sticky-notes"] || []);
-    });
-  });
-}
-
-function saveNote(title: string, content: string) {
-  browser.storage.local.get("sticky-notes", (result) => {
-    const notes = result["sticky-notes"] || [];
-    const newNote = {
-      id: Date.now().toString(),
-      title,
-      content,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    notes.push(newNote);
-    browser.storage.local.set({ "sticky-notes": notes }, () => {
-      console.log("Note saved:", newNote);
-      // Refresh the notes list after saving is complete
-      refreshNotesList();
-    });
-  });
-}
-
-function refreshNotesList() {
-  const widget = document.getElementById("sticky-note-widget");
-  if (!widget) {
-    console.error("Widget does not exist in the DOM.");
-    return;
-  }
-
-  const notesList = widget.querySelector(".notes-list") as HTMLElement;
-  browser.storage.local.get("sticky-notes", (result) => {
-    const notes = result["sticky-notes"] || [];
-
-    if (notes.length === 0) {
-      notesList.innerHTML = '<div class="no-notes">No notes yet. Click + to add one!</div>';
-      return;
-    }
-
-    notesList.innerHTML = notes
-      .map(
-        (note: any) => `
-      <div class="note-item" data-note-id="${note.id}">
-        <div class="note-title">${note.title}</div>
-        <div class="note-preview">${note.content.substring(0, 50)}${note.content.length > 50 ? "..." : ""}</div>
-      </div>
-    `
-      )
-      .join("");
-
-    notesList.querySelectorAll(".note-item").forEach((item) => {
-      item.addEventListener("click", (e) => {
-        const noteId = (e.currentTarget as HTMLElement).dataset.noteId;
-        console.log("Clicked note:", noteId);
-      });
-    });
-  });
-}
-
-function saveWidgetPosition(x: number, y: number) {
-  browser.storage.local.set({
-    "sticky-settings": {
-      widgetPosition: { x, y },
-    },
-  });
-}
-
-function loadWidgetPosition() {
+  
   try {
-    browser.storage.local.get("sticky-settings", (result: { [key: string]: any }) => {
-      const settings = result["sticky-settings"];
-      if (settings && settings.widgetPosition) {
-        const { x, y } = settings.widgetPosition;
-        const widget = document.getElementById("sticky-note-widget");
-        if (widget) {
-          widget.style.left = x + "px";
-          widget.style.top = y + "px";
-          widget.style.right = "auto";
-        }
-      }
-    });
-  } catch (e) {
-    console.error("Failed to load widget position:", e);
+    await browser.storage.local.set({ widgetPosition: position });
+  } catch (error) {
+    console.error("Error saving position:", error);
+  }
+}
+
+async function loadWidgetPosition() {
+  if (!widget) return;
+  
+  try {
+    const result = await browser.storage.local.get("widgetPosition");
+    if (result.widgetPosition) {
+      const { x, y } = result.widgetPosition;
+      widget.style.left = x + "px";
+      widget.style.top = y + "px";
+    }
+  } catch (error) {
+    console.error("Error loading position:", error);
   }
 }
