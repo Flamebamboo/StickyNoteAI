@@ -22,15 +22,15 @@ export default defineConfig({
     commands: {
       "toggle-widget": {
         suggested_key: {
-          default: "Ctrl+Shift+W",
-          mac: "Command+Shift+W",
+          default: "Alt+Shift+W",
+          mac: "Alt+Shift+W",
         },
         description: "Toggle widget visibility",
       },
       "new-note": {
         suggested_key: {
-          default: "Ctrl+Shift+S",
-          mac: "Command+Shift+S",
+          default: "Alt+Shift+N",
+          mac: "Alt+Shift+N",
         },
         description: "Create new note",
       },

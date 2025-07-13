@@ -132,7 +132,7 @@ function App() {
               <div className="action-card">
                 <h3>Quick Start</h3>
                 <p>
-                  Press <kbd>{navigator.platform.toUpperCase().indexOf("MAC") >= 0 ? "Cmd" : "Ctrl"}+Shift+S</kbd> to create a new note anywhere on the web!
+                  Press <kbd>Alt+Shift+N</kbd> to create a new note anywhere on the web!
                 </p>
               </div>
             </div>
@@ -147,7 +147,7 @@ function App() {
                     <li>Click the + button to add a note</li>
                     <li>Drag the widget to move it around</li>
                     <li>
-                      Use <kbd>{navigator.platform.toUpperCase().indexOf("MAC") >= 0 ? "Cmd" : "Ctrl"}+Shift+W</kbd> to hide/show
+                      Use <kbd>Alt+Shift+W</kbd> to hide/show
                     </li>
                   </ul>
                 </div>
@@ -189,11 +189,11 @@ function App() {
               <h3>Keyboard Shortcuts</h3>
               <div className="shortcuts-list">
                 <div className="shortcut-item">
-                  <kbd>{navigator.platform.toUpperCase().indexOf("MAC") >= 0 ? "Cmd" : "Ctrl"} + Shift + S</kbd>
+                  <kbd>Alt + Shift + N</kbd>
                   <span>New Note</span>
                 </div>
                 <div className="shortcut-item">
-                  <kbd>{navigator.platform.toUpperCase().indexOf("MAC") >= 0 ? "Cmd" : "Ctrl"} + Shift + W</kbd>
+                  <kbd>Alt + Shift + W</kbd>
                   <span>Hide/Show Widget</span>
                 </div>
                 <div className="shortcut-item">

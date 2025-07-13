@@ -571,7 +571,7 @@ function handleMenuAction(action: string) {
   }
 }
 
-function createNoteEditor() {
+function createNoteEditor(initialText: string = "") {
   const modal = document.createElement("div");
   modal.className = "sticky-modal";
   modal.innerHTML = `
@@ -580,7 +580,7 @@ function createNoteEditor() {
         <h3 class="modal-title">✏️ New Note</h3>
         <button class="modal-close">×</button>
       </div>
-      <textarea class="note-input" placeholder="Write your note here..." autofocus></textarea>
+      <textarea class="note-input" placeholder="Write your note here..." autofocus>${initialText}</textarea>
       <div class="button-group">
         <button class="btn btn-primary save-note">💾 Save Note</button>
         <button class="btn btn-secondary cancel-note">Cancel</button>
@@ -849,11 +849,9 @@ async function deleteNote(noteId: string) {
 
 function setupKeyboardShortcuts() {
   document.addEventListener("keydown", (e) => {
-    const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
-    const modifierKey = isMac ? e.metaKey : e.ctrlKey;
-
-    if (modifierKey && e.shiftKey) {
-      if (e.code === "KeyS") {
+    // Use Alt+Shift combinations to avoid conflicts with browser shortcuts
+    if (e.altKey && e.shiftKey) {
+      if (e.code === "KeyN") {
         e.preventDefault();
         createNoteEditor();
       } else if (e.code === "KeyW") {
@@ -886,6 +884,9 @@ function setupMessageListener() {
       }
     } else if (message.action === "new-note") {
       createNoteEditor();
+    } else if (message.action === "create-note-with-selection") {
+      // Handle context menu note creation with selected text
+      createNoteEditor(message.selectedText || "");
     }
 
     sendResponse({ success: true });
