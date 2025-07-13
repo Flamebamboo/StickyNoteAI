@@ -362,6 +362,63 @@ function setupWidgetEvents() {
   let startPosition = { x: 0, y: 0 };
   let hasMovedWhileDragging = false;
 
+  // Boundary constraint function
+  function constrainToBounds(x: number, y: number): { x: number; y: number } {
+    if (!widget) return { x, y };
+
+    const widgetRect = { width: 50, height: 50 }; // Widget dimensions
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    const margin = 10; // Minimum margin from edges
+
+    // Constrain horizontal position
+    let constrainedX = Math.max(margin, x);
+    constrainedX = Math.min(windowWidth - widgetRect.width - margin, constrainedX);
+
+    // Constrain vertical position
+    let constrainedY = Math.max(margin, y);
+    constrainedY = Math.min(windowHeight - widgetRect.height - margin, constrainedY);
+
+    return { x: constrainedX, y: constrainedY };
+  }
+
+  // Snap to nearest edge function
+  function snapToNearestEdge(x: number, y: number): { x: number; y: number } {
+    if (!widget) return { x, y };
+
+    const widgetRect = { width: 50, height: 50 };
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    const snapMargin = 20; // Distance from edge to snap to
+
+    // Calculate distances to each edge
+    const distanceToLeft = x;
+    const distanceToRight = windowWidth - (x + widgetRect.width);
+    const distanceToTop = y;
+    const distanceToBottom = windowHeight - (y + widgetRect.height);
+
+    // Find the nearest edge
+    const minDistance = Math.min(distanceToLeft, distanceToRight, distanceToTop, distanceToBottom);
+
+    let snappedX = x;
+    let snappedY = y;
+
+    // Snap to the nearest edge if widget is partially hidden
+    if (x < 0 || x + widgetRect.width > windowWidth || y < 0 || y + widgetRect.height > windowHeight) {
+      if (minDistance === distanceToLeft) {
+        snappedX = snapMargin;
+      } else if (minDistance === distanceToRight) {
+        snappedX = windowWidth - widgetRect.width - snapMargin;
+      } else if (minDistance === distanceToTop) {
+        snappedY = snapMargin;
+      } else if (minDistance === distanceToBottom) {
+        snappedY = windowHeight - widgetRect.height - snapMargin;
+      }
+    }
+
+    return { x: snappedX, y: snappedY };
+  }
+
   // Mouse events for main button
   mainButton.addEventListener("mousedown", (e) => {
     e.preventDefault();
@@ -408,12 +465,15 @@ function setupWidgetEvents() {
       const newX = e.clientX - dragOffset.x;
       const newY = e.clientY - dragOffset.y;
 
+      // Apply boundary constraints
+      const constrainedPosition = constrainToBounds(newX, newY);
+
       // Use transform for smoother movement
-      widget!.style.transform = `translate(${newX}px, ${newY}px)`;
+      widget!.style.transform = `translate(${constrainedPosition.x}px, ${constrainedPosition.y}px)`;
       widget!.style.left = "0";
       widget!.style.top = "0";
 
-      lastPosition = { x: newX, y: newY };
+      lastPosition = { x: constrainedPosition.x, y: constrainedPosition.y };
     }
   }
 
@@ -427,10 +487,31 @@ function setupWidgetEvents() {
     document.body.style.cursor = "";
 
     if (isDragging) {
-      // Apply final position
-      widget!.style.left = lastPosition.x + "px";
-      widget!.style.top = lastPosition.y + "px";
-      widget!.style.transform = "";
+      // Apply edge snapping if widget is partially outside bounds
+      const snappedPosition = snapToNearestEdge(lastPosition.x, lastPosition.y);
+
+      // Animate to snapped position if different from current position
+      if (snappedPosition.x !== lastPosition.x || snappedPosition.y !== lastPosition.y) {
+        widget!.style.transition = "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
+        widget!.style.left = snappedPosition.x + "px";
+        widget!.style.top = snappedPosition.y + "px";
+        widget!.style.transform = "";
+
+        // Remove transition after animation
+        setTimeout(() => {
+          if (widget) {
+            widget.style.transition = "";
+          }
+        }, 300);
+
+        lastPosition = snappedPosition;
+      } else {
+        // Apply final position normally
+        widget!.style.left = lastPosition.x + "px";
+        widget!.style.top = lastPosition.y + "px";
+        widget!.style.transform = "";
+      }
+
       saveWidgetPosition();
     }
 
