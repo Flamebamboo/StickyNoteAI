@@ -424,7 +424,9 @@ function setupWidgetEvents() {
     document.removeEventListener("mousemove", handleMouseMove);
     document.removeEventListener("mouseup", handleMouseUp);
     
-    mainButton.classList.remove("dragging");
+    if (mainButton) {
+      mainButton.classList.remove("dragging");
+    }
     document.body.style.cursor = "";
     
     if (isDragging) {
