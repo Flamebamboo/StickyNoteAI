@@ -56,7 +56,7 @@ function createFloatingWidget() {
   style.textContent = `
     #sticky-note-widget {
       position: fixed;
-      top: 50px;
+      bottom: 50px;
       right: 50px;
       z-index: 999999;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -368,13 +368,13 @@ function setupWidgetEvents() {
     dragStartTime = Date.now();
     startPosition = { x: e.clientX, y: e.clientY };
     hasMovedWhileDragging = false;
-    
+
     const rect = widget!.getBoundingClientRect();
     dragOffset.x = e.clientX - rect.left;
     dragOffset.y = e.clientY - rect.top;
-    
+
     mainButton.classList.add("dragging");
-    
+
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   });
@@ -394,10 +394,7 @@ function setupWidgetEvents() {
 
   function handleMouseMove(e: MouseEvent) {
     const timeDiff = Date.now() - dragStartTime;
-    const distance = Math.sqrt(
-      Math.pow(e.clientX - startPosition.x, 2) + 
-      Math.pow(e.clientY - startPosition.y, 2)
-    );
+    const distance = Math.sqrt(Math.pow(e.clientX - startPosition.x, 2) + Math.pow(e.clientY - startPosition.y, 2));
 
     // Start dragging if moved > 3px or held for > 100ms
     if (!isDragging && (distance > 3 || timeDiff > 100)) {
@@ -410,12 +407,12 @@ function setupWidgetEvents() {
     if (isDragging) {
       const newX = e.clientX - dragOffset.x;
       const newY = e.clientY - dragOffset.y;
-      
+
       // Use transform for smoother movement
       widget!.style.transform = `translate(${newX}px, ${newY}px)`;
       widget!.style.left = "0";
       widget!.style.top = "0";
-      
+
       lastPosition = { x: newX, y: newY };
     }
   }
@@ -423,12 +420,12 @@ function setupWidgetEvents() {
   function handleMouseUp() {
     document.removeEventListener("mousemove", handleMouseMove);
     document.removeEventListener("mouseup", handleMouseUp);
-    
+
     if (mainButton) {
       mainButton.classList.remove("dragging");
     }
     document.body.style.cursor = "";
-    
+
     if (isDragging) {
       // Apply final position
       widget!.style.left = lastPosition.x + "px";
@@ -436,9 +433,9 @@ function setupWidgetEvents() {
       widget!.style.transform = "";
       saveWidgetPosition();
     }
-    
+
     isDragging = false;
-    
+
     // Open menu after drag if not moved much
     setTimeout(() => {
       if (!hasMovedWhileDragging) {
@@ -451,7 +448,7 @@ function setupWidgetEvents() {
   menu?.addEventListener("click", (e) => {
     const target = e.target as HTMLElement;
     const action = target.dataset.action;
-    
+
     if (action) {
       handleMenuAction(action);
       closeMenu();
@@ -525,7 +522,7 @@ function createNoteEditor() {
 
   closeBtn?.addEventListener("click", closeModal);
   cancelBtn?.addEventListener("click", closeModal);
-  
+
   saveBtn?.addEventListener("click", () => {
     const content = textarea.value.trim();
     if (content) {
@@ -545,7 +542,7 @@ function createNoteEditor() {
 
 function toggleNotesPanel() {
   let panel = document.querySelector(".notes-panel") as HTMLElement;
-  
+
   if (!panel) {
     panel = document.createElement("div");
     panel.className = "notes-panel";
@@ -558,7 +555,7 @@ function toggleNotesPanel() {
   }
 
   panel.classList.toggle("open");
-  
+
   if (panel.classList.contains("open")) {
     refreshNotesList();
     setTimeout(() => {
@@ -630,21 +627,21 @@ async function saveNote(content: string) {
   try {
     const result = await browser.storage.local.get("stickyNotes");
     const notes = result.stickyNotes || [];
-    
+
     const newNote = {
       id: Date.now().toString(),
       content,
       timestamp: new Date().toISOString(),
-      url: window.location.href
+      url: window.location.href,
     };
-    
+
     notes.unshift(newNote);
-    
+
     // Keep only last 50 notes
     if (notes.length > 50) {
       notes.splice(50);
     }
-    
+
     await browser.storage.local.set({ stickyNotes: notes });
     console.log("Note saved successfully");
   } catch (error) {
@@ -659,21 +656,26 @@ async function refreshNotesList() {
   try {
     const result = await browser.storage.local.get("stickyNotes");
     const notes = result.stickyNotes || [];
-    
+
     if (notes.length === 0) {
       notesList.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No notes yet</div>';
       return;
     }
-    
-    notesList.innerHTML = notes.slice(0, 10).map((note: any) => `
+
+    notesList.innerHTML = notes
+      .slice(0, 10)
+      .map(
+        (note: any) => `
       <div class="note-item" data-note-id="${note.id}">
-        <div class="note-preview">${note.content.substring(0, 100)}${note.content.length > 100 ? '...' : ''}</div>
+        <div class="note-preview">${note.content.substring(0, 100)}${note.content.length > 100 ? "..." : ""}</div>
         <div class="note-date">${new Date(note.timestamp).toLocaleDateString()}</div>
       </div>
-    `).join("");
-    
+    `
+      )
+      .join("");
+
     // Click to edit note
-    notesList.querySelectorAll(".note-item").forEach(item => {
+    notesList.querySelectorAll(".note-item").forEach((item) => {
       item.addEventListener("click", () => {
         const noteId = (item as HTMLElement).dataset.noteId;
         const note = notes.find((n: any) => n.id === noteId);
@@ -709,7 +711,7 @@ function editNote(note: any) {
   setTimeout(() => modal.classList.add("open"), 10);
 
   const textarea = modal.querySelector(".note-input") as HTMLTextAreaElement;
-  
+
   function closeModal() {
     modal.classList.remove("open");
     setTimeout(() => modal.remove(), 300);
@@ -717,7 +719,7 @@ function editNote(note: any) {
 
   modal.querySelector(".modal-close")?.addEventListener("click", closeModal);
   modal.querySelector(".cancel-edit")?.addEventListener("click", closeModal);
-  
+
   modal.querySelector(".update-note")?.addEventListener("click", async () => {
     const content = textarea.value.trim();
     if (content) {
@@ -740,7 +742,7 @@ async function updateNote(noteId: string, newContent: string) {
   try {
     const result = await browser.storage.local.get("stickyNotes");
     const notes = result.stickyNotes || [];
-    
+
     const noteIndex = notes.findIndex((note: any) => note.id === noteId);
     if (noteIndex !== -1) {
       notes[noteIndex].content = newContent;
@@ -756,7 +758,7 @@ async function deleteNote(noteId: string) {
   try {
     const result = await browser.storage.local.get("stickyNotes");
     const notes = result.stickyNotes || [];
-    
+
     const filteredNotes = notes.filter((note: any) => note.id !== noteId);
     await browser.storage.local.set({ stickyNotes: filteredNotes });
   } catch (error) {
@@ -766,7 +768,7 @@ async function deleteNote(noteId: string) {
 
 function setupKeyboardShortcuts() {
   document.addEventListener("keydown", (e) => {
-    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
     const modifierKey = isMac ? e.metaKey : e.ctrlKey;
 
     if (modifierKey && e.shiftKey) {
@@ -811,13 +813,13 @@ function setupMessageListener() {
 
 async function saveWidgetPosition() {
   if (!widget) return;
-  
+
   const rect = widget.getBoundingClientRect();
   const position = {
     x: rect.left,
-    y: rect.top
+    y: rect.top,
   };
-  
+
   try {
     await browser.storage.local.set({ widgetPosition: position });
   } catch (error) {
@@ -827,15 +829,17 @@ async function saveWidgetPosition() {
 
 async function loadWidgetPosition() {
   if (!widget) return;
-  
+
+  // Reset to default position on page refresh
+  // The widget will use the default CSS position (top: 50px, right: 50px)
+  widget.style.left = "";
+  widget.style.top = "";
+  widget.style.transform = "";
+
+  // Clear any saved position
   try {
-    const result = await browser.storage.local.get("widgetPosition");
-    if (result.widgetPosition) {
-      const { x, y } = result.widgetPosition;
-      widget.style.left = x + "px";
-      widget.style.top = y + "px";
-    }
+    await browser.storage.local.remove("widgetPosition");
   } catch (error) {
-    console.error("Error loading position:", error);
+    console.error("Error clearing position:", error);
   }
 }
