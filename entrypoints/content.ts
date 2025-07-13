@@ -1,7 +1,7 @@
 export default defineContentScript({
   matches: ["<all_urls>"],
   main() {
-    console.log("🎯 StickyNoteAI v2.0 NEW CIRCULAR UI - Loading...");
+    console.log("🎯 StickyNoteAI v2.2 CSS FIXED + MENU POSITIONING - Loading...");
 
     // Wait for DOM to be ready
     if (document.readyState === "loading") {
@@ -39,17 +39,18 @@ function createFloatingWidget() {
   widget = document.createElement("div");
   widget.id = "sticky-note-widget";
   widget.innerHTML = `
-    <div class="widget-main-button" id="main-button">
-      ✨
-    </div>
-    <div class="widget-menu" id="widget-menu">
-      <div class="menu-button add-button" data-action="add">➕</div>
-      <div class="menu-button notes-button" data-action="notes">📋</div>
-      <div class="menu-button settings-button" data-action="settings">⚙️</div>
-      <div class="menu-button close-button" data-action="close">❌</div>
+    <div class="widget-container">
+      <div class="widget-main-button" id="main-button">
+        ✨
+      </div>
+      <div class="widget-menu" id="widget-menu">
+        <div class="menu-button add-button" data-action="add">➕</div>
+        <div class="menu-button notes-button" data-action="notes">📋</div>
+        <div class="menu-button settings-button" data-action="settings">⚙️</div>
+        <div class="menu-button close-button" data-action="close">❌</div>
+      </div>
     </div>
   `;
-
   // Add styles
   const style = document.createElement("style");
   style.textContent = `
@@ -61,6 +62,11 @@ function createFloatingWidget() {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       user-select: none;
       pointer-events: auto;
+    }
+
+    .widget-container {
+      position: relative;
+      display: inline-block;
     }
 
     .widget-main-button {
@@ -93,9 +99,10 @@ function createFloatingWidget() {
 
     .widget-menu {
       position: absolute;
-      top: 60px;
+      top: 100%;
       left: 50%;
       transform: translateX(-50%);
+      margin-top: 10px;
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -149,7 +156,6 @@ function createFloatingWidget() {
       color: white;
     }
 
-    /* Modal styles */
     .sticky-modal {
       position: fixed;
       top: 0;
@@ -340,7 +346,6 @@ function createFloatingWidget() {
       }
     }
   `;
-
   document.head.appendChild(style);
   document.body.appendChild(widget);
 
