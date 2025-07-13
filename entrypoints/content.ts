@@ -68,97 +68,143 @@ function createFloatingWidget() {
     position: fixed !important;
     top: 20px !important;
     right: 20px !important;
-    width: 280px !important;
-    background: rgba(255, 255, 255, 0.1) !important;
+    width: 60px !important;
+    height: 60px !important;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.9), rgba(168, 85, 247, 0.9)) !important;
     backdrop-filter: blur(20px) !important;
     -webkit-backdrop-filter: blur(20px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    border-radius: 16px !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+    border: 2px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 50% !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2) !important;
     z-index: 999999 !important;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
     font-size: 14px !important;
     cursor: move !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    overflow: hidden !important;
+    overflow: visible !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
   `;
 
   widget.innerHTML = `
-    <div class="widget-header" style="
-      display: flex; 
-      align-items: center; 
-      padding: 16px 20px; 
-      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1)); 
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
-      gap: 12px;
-      backdrop-filter: blur(10px);
+    <div class="widget-circle" style="
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      position: relative;
+      z-index: 2;
     ">
-      <span class="widget-icon" style="font-size: 18px; flex: 1; color: #6366f1; filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.3));">✨</span>
-      <button class="btn-add" title="Add Note" style="
-        background: linear-gradient(135deg, #10b981, #059669); 
-        border: none; 
-        padding: 8px 12px; 
-        border-radius: 8px; 
-        cursor: pointer; 
-        font-size: 12px; 
-        font-weight: 600; 
-        color: white;
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-        transition: all 0.2s ease;
-      ">+ Add</button>
-      <button class="btn-menu" title="Menu" style="
-        background: rgba(255, 255, 255, 0.1); 
-        border: 1px solid rgba(255, 255, 255, 0.2); 
-        padding: 8px; 
-        border-radius: 8px; 
-        cursor: pointer; 
-        font-size: 14px; 
-        font-weight: bold; 
-        color: #64748b;
-        transition: all 0.2s ease;
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      ">≡</button>
-      <button class="btn-hide" title="Hide" style="
-        background: rgba(255, 255, 255, 0.1); 
-        border: 1px solid rgba(255, 255, 255, 0.2); 
-        padding: 8px; 
-        border-radius: 8px; 
-        cursor: pointer; 
-        font-size: 14px; 
-        font-weight: bold; 
-        color: #ef4444;
-        transition: all 0.2s ease;
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      ">×</button>
+      <span class="widget-icon" style="
+        font-size: 24px; 
+        color: white; 
+        filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
+        pointer-events: none;
+      ">✨</span>
     </div>
-    <div class="widget-body" style="
-      display: none; 
-      padding: 20px; 
-      max-height: 400px; 
-      overflow-y: auto;
-      background: rgba(255, 255, 255, 0.05);
+    <div class="widget-expanded" style="
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 280px;
+      height: auto;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateX(20px);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+      z-index: 1;
     ">
-      <div class="notes-list" style="display: flex; flex-direction: column; gap: 12px;">
-        <div class="no-notes" style="
-          color: #64748b; 
-          font-style: italic; 
-          text-align: center; 
-          padding: 32px 16px;
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 12px;
-          border: 1px dashed rgba(255, 255, 255, 0.2);
-        ">
-          <div style="font-size: 24px; margin-bottom: 8px;">📝</div>
-          <div style="font-size: 13px; color: #94a3b8;">No notes yet</div>
-          <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Click + Add to create your first note</div>
+      <div class="widget-header" style="
+        display: flex; 
+        align-items: center; 
+        padding: 16px 20px; 
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1)); 
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
+        gap: 12px;
+        backdrop-filter: blur(10px);
+      ">
+        <span class="widget-icon-header" style="font-size: 18px; flex: 1; color: #6366f1; filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.3));">✨</span>
+        <button class="btn-add" title="Add Note" style="
+          background: linear-gradient(135deg, #10b981, #059669); 
+          border: none; 
+          padding: 8px 12px; 
+          border-radius: 8px; 
+          cursor: pointer; 
+          font-size: 12px; 
+          font-weight: 600; 
+          color: white;
+          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+          transition: all 0.2s ease;
+          pointer-events: auto;
+        ">+ Add</button>
+        <button class="btn-menu" title="Menu" style="
+          background: rgba(255, 255, 255, 0.1); 
+          border: 1px solid rgba(255, 255, 255, 0.2); 
+          padding: 8px; 
+          border-radius: 8px; 
+          cursor: pointer; 
+          font-size: 14px; 
+          font-weight: bold; 
+          color: #64748b;
+          transition: all 0.2s ease;
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          pointer-events: auto;
+        ">≡</button>
+        <button class="btn-hide" title="Hide" style="
+          background: rgba(255, 255, 255, 0.1); 
+          border: 1px solid rgba(255, 255, 255, 0.2); 
+          padding: 8px; 
+          border-radius: 8px; 
+          cursor: pointer; 
+          font-size: 14px; 
+          font-weight: bold; 
+          color: #ef4444;
+          transition: all 0.2s ease;
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          pointer-events: auto;
+        ">×</button>
+      </div>
+      <div class="widget-body" style="
+        display: none; 
+        padding: 20px; 
+        max-height: 400px; 
+        overflow-y: auto;
+        background: rgba(255, 255, 255, 0.05);
+        pointer-events: auto;
+      ">
+        <div class="notes-list" style="display: flex; flex-direction: column; gap: 12px;">
+          <div class="no-notes" style="
+            color: #64748b; 
+            font-style: italic; 
+            text-align: center; 
+            padding: 32px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            border: 1px dashed rgba(255, 255, 255, 0.2);
+          ">
+            <div style="font-size: 24px; margin-bottom: 8px;">📝</div>
+            <div style="font-size: 13px; color: #94a3b8;">No notes yet</div>
+            <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Click + Add to create your first note</div>
+          </div>
         </div>
       </div>
     </div>
@@ -206,11 +252,40 @@ function addWidgetStyles() {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
     }
 
-    #sticky-note-widget:hover {
-      transform: translateY(-2px) !important;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15) !important;
+    /* Prevent text selection on entire widget */
+    #sticky-note-widget * {
+      user-select: none !important;
+      -webkit-user-select: none !important;
+      -moz-user-select: none !important;
+      -ms-user-select: none !important;
     }
 
+    /* Hover effect for circle widget */
+    #sticky-note-widget:hover {
+      transform: scale(1.1) !important;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    /* Show expanded widget on hover */
+    #sticky-note-widget:hover .widget-expanded {
+      opacity: 1 !important;
+      visibility: visible !important;
+      transform: translateX(0) !important;
+      pointer-events: auto !important;
+    }
+
+    /* Dragging state */
+    #sticky-note-widget.dragging {
+      transition: none !important;
+    }
+
+    #sticky-note-widget.dragging .widget-expanded {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+
+    /* Button hover effects */
     #sticky-note-widget .btn-add:hover {
       background: linear-gradient(135deg, #059669, #047857) !important;
       transform: translateY(-1px) !important;
@@ -291,45 +366,14 @@ function addWidgetStyles() {
 
     /* Stealth mode - ultra minimal */
     #sticky-note-widget.stealth {
-      opacity: 0.1 !important;
-      transform: scale(0.85) !important;
+      opacity: 0.3 !important;
+      transform: scale(0.9) !important;
       transition: all 0.3s ease !important;
     }
 
     #sticky-note-widget.stealth:hover {
-      opacity: 0.9 !important;
-      transform: scale(1) translateY(-2px) !important;
-    }
-
-    /* Minimized state */
-    #sticky-note-widget.minimized {
-      width: 64px !important;
-      height: 64px !important;
-      border-radius: 50% !important;
-      background: linear-gradient(135deg, rgba(99, 102, 241, 0.9), rgba(168, 85, 247, 0.9)) !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-    }
-
-    #sticky-note-widget.minimized .widget-header {
-      border: none !important;
-      background: none !important;
-      padding: 0 !important;
-      justify-content: center !important;
-    }
-
-    #sticky-note-widget.minimized .widget-icon {
-      font-size: 24px !important;
-      color: white !important;
-      filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)) !important;
-    }
-
-    #sticky-note-widget.minimized .widget-body,
-    #sticky-note-widget.minimized .btn-menu,
-    #sticky-note-widget.minimized .btn-add,
-    #sticky-note-widget.minimized .btn-hide {
-      display: none !important;
+      opacity: 1 !important;
+      transform: scale(1.1) !important;
     }
 
     /* Animations */
@@ -366,6 +410,11 @@ function addWidgetStyles() {
     #sticky-note-widget .widget-body::-webkit-scrollbar-thumb:hover {
       background: rgba(255, 255, 255, 0.5) !important;
     }
+
+    /* Ensure smooth dragging */
+    #sticky-note-widget.dragging * {
+      pointer-events: none !important;
+    }
   `;
 
   document.head.appendChild(styles);
@@ -377,54 +426,148 @@ function makeDraggable(element: HTMLElement) {
   let currentY = 0;
   let initialX = 0;
   let initialY = 0;
+  let dragStartTime = 0;
 
-  const header = element.querySelector(".widget-header") as HTMLElement;
+  const circle = element.querySelector(".widget-circle") as HTMLElement;
 
-  header.addEventListener("mousedown", dragStart);
+  // Add event listeners for better drag handling
+  circle.addEventListener("mousedown", dragStart);
   document.addEventListener("mousemove", drag);
   document.addEventListener("mouseup", dragEnd);
 
-  function dragStart(e: MouseEvent) {
-    if ((e.target as HTMLElement).tagName === "BUTTON") {
-      return; // Don't drag if clicking buttons
+  // Prevent context menu on right click while dragging
+  element.addEventListener("contextmenu", (e) => {
+    if (isDragging) {
+      e.preventDefault();
     }
+  });
+
+  // Prevent text selection during drag
+  element.addEventListener("selectstart", (e) => {
+    if (isDragging) {
+      e.preventDefault();
+    }
+  });
+
+  function dragStart(e: MouseEvent) {
+    // Only start dragging on left mouse button
+    if (e.button !== 0) return;
+
+    dragStartTime = Date.now();
+
+    // Prevent default to avoid text selection
+    e.preventDefault();
 
     initialX = e.clientX - currentX;
     initialY = e.clientY - currentY;
 
-    if (e.target === header || header.contains(e.target as Node)) {
-      isDragging = true;
-      element.style.cursor = "grabbing";
-    }
+    isDragging = true;
+
+    // Add dragging class to disable transitions and hide expanded widget
+    element.classList.add("dragging");
+
+    // Change cursor
+    document.body.style.cursor = "grabbing";
+
+    // Disable text selection on entire document
+    document.body.style.userSelect = "none";
+    document.body.style.webkitUserSelect = "none";
   }
 
   function drag(e: MouseEvent) {
     if (isDragging) {
       e.preventDefault();
+
       currentX = e.clientX - initialX;
       currentY = e.clientY - initialY;
 
-      // Keep widget within viewport
+      // Keep widget within viewport with some padding
       const rect = element.getBoundingClientRect();
-      const maxX = window.innerWidth - rect.width;
-      const maxY = window.innerHeight - rect.height;
+      const padding = 10;
+      const maxX = window.innerWidth - rect.width - padding;
+      const maxY = window.innerHeight - rect.height - padding;
 
-      currentX = Math.max(0, Math.min(currentX, maxX));
-      currentY = Math.max(0, Math.min(currentY, maxY));
+      currentX = Math.max(padding, Math.min(currentX, maxX));
+      currentY = Math.max(padding, Math.min(currentY, maxY));
 
-      element.style.left = currentX + "px";
-      element.style.top = currentY + "px";
+      // Use transform for smoother movement
+      element.style.transform = `translate(${currentX}px, ${currentY}px)`;
+      element.style.left = "0";
+      element.style.top = "0";
       element.style.right = "auto";
     }
   }
 
-  function dragEnd() {
+  function dragEnd(e: MouseEvent) {
+    if (!isDragging) return;
+
     isDragging = false;
-    element.style.cursor = "move";
+
+    // Remove dragging class
+    element.classList.remove("dragging");
+
+    // Reset cursor
+    document.body.style.cursor = "";
+
+    // Re-enable text selection
+    document.body.style.userSelect = "";
+    document.body.style.webkitUserSelect = "";
+
+    // Convert transform to position for persistence
+    element.style.left = currentX + "px";
+    element.style.top = currentY + "px";
+    element.style.transform = "";
 
     // Save position to storage
     saveWidgetPosition(currentX, currentY);
+
+    // Check if this was a click vs drag
+    const dragDuration = Date.now() - dragStartTime;
+    if (dragDuration < 200) {
+      // This was likely a click, not a drag
+      const distance = Math.sqrt(Math.pow(e.clientX - (initialX + currentX), 2) + Math.pow(e.clientY - (initialY + currentY), 2));
+
+      if (distance < 5) {
+        // Handle click on circle (could expand or show quick menu)
+        console.log("Circle clicked");
+      }
+    }
   }
+
+  // Touch events for mobile support
+  circle.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const mouseEvent = new MouseEvent("mousedown", {
+      clientX: touch.clientX,
+      clientY: touch.clientY,
+      button: 0,
+    });
+    dragStart(mouseEvent);
+  });
+
+  document.addEventListener("touchmove", (e) => {
+    if (isDragging) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const mouseEvent = new MouseEvent("mousemove", {
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+      });
+      drag(mouseEvent);
+    }
+  });
+
+  document.addEventListener("touchend", (e) => {
+    if (isDragging) {
+      e.preventDefault();
+      const mouseEvent = new MouseEvent("mouseup", {
+        clientX: 0,
+        clientY: 0,
+      });
+      dragEnd(mouseEvent);
+    }
+  });
 }
 
 function addWidgetEventListeners(widget: HTMLElement) {
@@ -432,30 +575,67 @@ function addWidgetEventListeners(widget: HTMLElement) {
   const menuBtn = widget.querySelector(".btn-menu") as HTMLButtonElement;
   const hideBtn = widget.querySelector(".btn-hide") as HTMLButtonElement;
   const widgetBody = widget.querySelector(".widget-body") as HTMLElement;
+  const expandedWidget = widget.querySelector(".widget-expanded") as HTMLElement;
 
   // Add note button
-  addBtn.addEventListener("click", (e) => {
+  addBtn?.addEventListener("click", (e) => {
     e.stopPropagation();
+    e.preventDefault();
     createNoteEditor();
   });
 
   // Menu button (toggle widget body)
-  menuBtn.addEventListener("click", (e) => {
+  menuBtn?.addEventListener("click", (e) => {
     e.stopPropagation();
+    e.preventDefault();
     const isVisible = widgetBody.style.display !== "none";
     widgetBody.style.display = isVisible ? "none" : "block";
     menuBtn.textContent = isVisible ? "≡" : "×";
   });
 
-  // Hide button
-  hideBtn.addEventListener("click", (e) => {
+  // Hide button - now hides the entire widget
+  hideBtn?.addEventListener("click", (e) => {
     e.stopPropagation();
-    widget.classList.toggle("minimized");
+    e.preventDefault();
+    widget.style.display = "none";
   });
 
-  // Double-click to minimize
-  widget.addEventListener("dblclick", () => {
-    widget.classList.toggle("minimized");
+  // Keep expanded widget visible when hovering over it
+  expandedWidget?.addEventListener("mouseenter", () => {
+    expandedWidget.style.opacity = "1";
+    expandedWidget.style.visibility = "visible";
+    expandedWidget.style.transform = "translateX(0)";
+    expandedWidget.style.pointerEvents = "auto";
+  });
+
+  // Add slight delay before hiding to prevent flickering
+  let hideTimeout: NodeJS.Timeout | null = null;
+
+  widget.addEventListener("mouseleave", () => {
+    hideTimeout = setTimeout(() => {
+      if (!widget.matches(":hover")) {
+        const expanded = widget.querySelector(".widget-expanded") as HTMLElement;
+        if (expanded) {
+          expanded.style.opacity = "0";
+          expanded.style.visibility = "hidden";
+          expanded.style.transform = "translateX(20px)";
+          expanded.style.pointerEvents = "none";
+        }
+      }
+    }, 100);
+  });
+
+  widget.addEventListener("mouseenter", () => {
+    if (hideTimeout) {
+      clearTimeout(hideTimeout);
+      hideTimeout = null;
+    }
+  });
+
+  // Double-click to hide widget completely
+  widget.addEventListener("dblclick", (e) => {
+    e.preventDefault();
+    widget.style.display = "none";
   });
 
   // Keyboard shortcuts (Mac-compatible)
