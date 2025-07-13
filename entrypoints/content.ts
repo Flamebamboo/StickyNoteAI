@@ -19,6 +19,7 @@ let isDragging = false;
 let isMenuOpen = false;
 let dragOffset = { x: 0, y: 0 };
 let lastPosition = { x: 0, y: 0 };
+let menuCloseTimeout: NodeJS.Timeout | null = null;
 
 function initializeWidget() {
   console.log("StickyNoteAI: DOM ready, creating widget...");
@@ -436,16 +437,53 @@ function setupWidgetEvents() {
     document.addEventListener("mouseup", handleMouseUp);
   });
 
-  // Hover events for menu
+  // Improved hover events for menu with better boundary detection
   mainButton.addEventListener("mouseenter", () => {
     if (!isDragging) {
+      // Clear any pending close timeout
+      if (menuCloseTimeout) {
+        clearTimeout(menuCloseTimeout);
+        menuCloseTimeout = null;
+      }
       openMenu();
     }
   });
 
-  widget?.addEventListener("mouseleave", () => {
+  // Keep menu open when hovering over menu items
+  menu.addEventListener("mouseenter", () => {
+    if (menuCloseTimeout) {
+      clearTimeout(menuCloseTimeout);
+      menuCloseTimeout = null;
+    }
+  });
+
+  // Close menu when leaving menu area
+  menu.addEventListener("mouseleave", () => {
     if (!isDragging) {
-      closeMenu();
+      menuCloseTimeout = setTimeout(() => {
+        closeMenu();
+        menuCloseTimeout = null;
+      }, 100);
+    }
+  });
+
+  // Close menu when leaving main button area (but not if going to menu)
+  mainButton.addEventListener("mouseleave", (e) => {
+    if (!isDragging) {
+      // Check if mouse is moving towards the menu
+      const rect = menu.getBoundingClientRect();
+      const mouseX = e.clientX;
+      const mouseY = e.clientY;
+
+      // If mouse is within menu bounds or moving towards menu, don't close
+      const isNearMenu = mouseX >= rect.left - 10 && mouseX <= rect.right + 10 && mouseY >= rect.top - 10 && mouseY <= rect.bottom + 10;
+
+      if (!isNearMenu) {
+        menuCloseTimeout = setTimeout(() => {
+          closeMenu();
+          menuCloseTimeout = null;
+        }, 100);
+      }
     }
   });
 
@@ -551,6 +589,11 @@ function closeMenu() {
   if (menu) {
     menu.classList.remove("open");
     isMenuOpen = false;
+  }
+  // Clear any pending timeout
+  if (menuCloseTimeout) {
+    clearTimeout(menuCloseTimeout);
+    menuCloseTimeout = null;
   }
 }
 
@@ -848,31 +891,16 @@ async function deleteNote(noteId: string) {
 }
 
 function setupKeyboardShortcuts() {
-  document.addEventListener("keydown", (e) => {
-    // Use Alt+Shift combinations to avoid conflicts with browser shortcuts
-    if (e.altKey && e.shiftKey) {
-      if (e.code === "KeyN") {
-        e.preventDefault();
-        createNoteEditor();
-      } else if (e.code === "KeyW") {
-        e.preventDefault();
-        const widget = document.getElementById("sticky-note-widget");
-        if (widget) {
-          if (widget.style.display === "none") {
-            showWidget();
-          } else {
-            hideWidget();
-          }
-        }
-      }
-    }
-  });
+  // Keyboard shortcuts are now handled by the background script via commands API
+  // This function is kept for future local keyboard shortcuts if needed
+  console.log("StickyNoteAI: Keyboard shortcuts delegated to background script");
 }
 
 function setupMessageListener() {
   browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log("StickyNoteAI: Received message:", message);
 
+    // Handle keyboard shortcut commands from background script
     if (message.action === "toggle-widget") {
       const widget = document.getElementById("sticky-note-widget");
       if (widget) {
@@ -882,14 +910,39 @@ function setupMessageListener() {
           hideWidget();
         }
       }
-    } else if (message.action === "new-note") {
-      createNoteEditor();
-    } else if (message.action === "create-note-with-selection") {
-      // Handle context menu note creation with selected text
-      createNoteEditor(message.selectedText || "");
+      sendResponse({ success: true });
+      return;
     }
 
-    sendResponse({ success: true });
+    if (message.action === "new-note") {
+      createNoteEditor();
+      sendResponse({ success: true });
+      return;
+    }
+
+    // Handle other actions
+    if (message.action === "create-note-with-selection") {
+      // Handle context menu note creation with selected text
+      createNoteEditor(message.selectedText || "");
+      sendResponse({ success: true });
+      return;
+    }
+
+    if (message.action === "toggleStealth") {
+      // Handle stealth mode toggle from popup
+      const widget = document.getElementById("sticky-note-widget");
+      if (widget) {
+        if (message.enabled) {
+          widget.style.opacity = "0.3";
+        } else {
+          widget.style.opacity = "1";
+        }
+      }
+      sendResponse({ success: true });
+      return;
+    }
+
+    sendResponse({ success: false, error: "Unknown action" });
   });
 }
 
