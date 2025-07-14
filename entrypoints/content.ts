@@ -20,6 +20,7 @@ let isMenuOpen = false;
 let dragOffset = { x: 0, y: 0 };
 let lastPosition = { x: 0, y: 0 };
 let menuCloseTimeout: NodeJS.Timeout | null = null;
+let globalSmilyFaceUrl: string; // Global variable for smiley face URL
 
 function initializeWidget() {
   console.log("StickyNoteAI: DOM ready, creating widget...");
@@ -47,12 +48,14 @@ function createFloatingWidget() {
   try {
     // Primary approach: Use browser.runtime.getURL
     smilyFaceUrl = browser.runtime.getURL("smilyface.gif" as any);
+    globalSmilyFaceUrl = smilyFaceUrl; // Store globally
     add2Url = browser.runtime.getURL("add2.png" as any);
   } catch (error) {
     console.warn("browser.runtime.getURL failed, using fallback approach:", error);
     // Fallback approach: Direct extension URL construction
     const extensionId = browser.runtime.id || chrome.runtime.id;
     smilyFaceUrl = `chrome-extension://${extensionId}/smilyface.gif`;
+    globalSmilyFaceUrl = smilyFaceUrl; // Store globally
     add2Url = `chrome-extension://${extensionId}/add2.png`;
   }
 
@@ -67,7 +70,7 @@ function createFloatingWidget() {
       </div>
       <div class="widget-menu" id="widget-menu">
         <div class="menu-button add-button" data-action="add">
-          <img src="${add2Url}" alt="Add" style="width: 20px; height: 20px;" id="add-image">
+          <span class="add-icon">📝</span>
         </div>
         <div class="menu-button notes-button" data-action="notes">📋</div>
         <div class="menu-button settings-button" data-action="settings">⚙️</div>
@@ -96,48 +99,25 @@ function createFloatingWidget() {
     .widget-main-button {
       width: 50px;
       height: 50px;
-      background: linear-gradient(135deg, #9929EA 0%, #CC66DA 100%);
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 20px;
       cursor: pointer;
-      box-shadow: 
-        0 4px 20px rgba(153, 41, 234, 0.4),
-        0 0 20px rgba(153, 41, 234, 0.5),
-        0 0 40px rgba(204, 102, 218, 0.3),
-        0 0 60px rgba(204, 102, 218, 0.2);
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      border: 2px solid rgba(250, 235, 146, 0.3);
+      box-shadow: 0 4px 16px rgba(34, 197, 94, 0.3);
+      transition: all 0.3s ease;
+      border: 2px solid rgba(255, 255, 255, 0.3);
       backdrop-filter: blur(10px);
       position: relative;
-      animation: pulseGlow 3s ease-in-out infinite;
-    }
-
-    @keyframes pulseGlow {
-      0%, 100% {
-        box-shadow: 
-          0 4px 20px rgba(153, 41, 234, 0.4),
-          0 0 20px rgba(153, 41, 234, 0.5),
-          0 0 40px rgba(204, 102, 218, 0.3),
-          0 0 60px rgba(204, 102, 218, 0.2);
-      }
-      50% {
-        box-shadow: 
-          0 4px 25px rgba(153, 41, 234, 0.6),
-          0 0 30px rgba(153, 41, 234, 0.7),
-          0 0 60px rgba(204, 102, 218, 0.5),
-          0 0 90px rgba(204, 102, 218, 0.3);
-      }
     }
 
     .widget-main-button:hover {
       transform: scale(1.05);
-      box-shadow: 
-        0 6px 25px rgba(153, 41, 234, 0.6),
-        0 0 35px rgba(153, 41, 234, 0.8),
-        0 0 70px rgba(204, 102, 218, 0.6),
+      box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+      background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+    }
         0 0 100px rgba(204, 102, 218, 0.4);
       animation: pulseGlowHover 2s ease-in-out infinite;
     }
@@ -194,20 +174,20 @@ function createFloatingWidget() {
     .menu-button {
       width: 40px;
       height: 40px;
-      background: linear-gradient(135deg, #FAEB92 0%, #CC66DA 100%);
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 16px;
       cursor: pointer;
-      box-shadow: 0 3px 15px rgba(153, 41, 234, 0.3);
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      border: 2px solid rgba(153, 41, 234, 0.2);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      transition: all 0.2s ease;
+      border: 2px solid rgba(34, 197, 94, 0.2);
       backdrop-filter: blur(10px);
       transform: translateY(-10px);
       opacity: 0;
-      color: #000000;
+      color: #374151;
     }
 
     .widget-menu.open .menu-button {
@@ -222,9 +202,17 @@ function createFloatingWidget() {
 
     .menu-button:hover {
       transform: scale(1.1);
-      box-shadow: 0 5px 20px rgba(153, 41, 234, 0.5);
-      background: linear-gradient(135deg, #FAEB92 0%, #9929EA 100%);
-      color: #FAEB92;
+      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+      color: white;
+      border-color: rgba(22, 163, 74, 0.3);
+    }
+
+    .add-icon {
+      font-size: 16px;
+      line-height: 1;
+      user-select: none;
+      pointer-events: none;
     }
 
 
@@ -382,16 +370,15 @@ function createFloatingWidget() {
       transform: translateY(-50%);
       width: 280px;
       max-height: 400px;
-      background: linear-gradient(135deg, #FAEB92 0%, #CC66DA 100%);
-      border-radius: 15px;
-      box-shadow: 
-        0 10px 40px rgba(153, 41, 234, 0.5),
-        0 0 0 3px #000000,
-        0 5px 20px rgba(204, 102, 218, 0.4);
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 8px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15),
+                  0 2px 8px rgba(0, 0, 0, 0.1);
       z-index: 999998;
-      transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: right 0.3s ease;
       overflow: hidden;
-      border: 3px solid #000000;
+      border: none;
+      backdrop-filter: blur(10px);
     }
 
     .notes-panel.open {
@@ -399,54 +386,70 @@ function createFloatingWidget() {
     }
 
     .notes-header {
-      background: #FDFFB8;
-      color: #000000;
-      padding: 15px;
+      background: rgba(255, 251, 147, 0.8);
+      color: #4a4a4a;
+      padding: 12px 16px;
       font-weight: 600;
-      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-      border-bottom: 3px solid #000000;
+      font-size: 14px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
     }
 
     .notes-list {
       max-height: 300px;
       overflow-y: auto;
-      padding: 10px;
-      background: rgba(0, 0, 0, 0.1);
+      padding: 8px;
+      background: transparent;
     }
 
     .note-item {
       padding: 12px;
-      border-bottom: 2px solid #000000;
+      margin-bottom: 8px;
       cursor: pointer;
+      background: rgba(255, 251, 147, 0.6);
+      border-radius: 4px;
+      border: none;
       transition: all 0.2s ease;
-      border-radius: 8px;
-      margin-bottom: 5px;
-      background: rgba(253, 255, 184, 0.4);
-      backdrop-filter: blur(5px);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
 
     .note-item:hover {
-      background: rgba(253, 255, 184, 0.7);
-      transform: translateX(5px);
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+      background: rgba(255, 251, 147, 0.8);
+      transform: translateX(3px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .note-item:nth-child(2n) {
+      background: rgba(255, 237, 213, 0.6);
+    }
+
+    .note-item:nth-child(2n):hover {
+      background: rgba(255, 237, 213, 0.8);
+    }
+
+    .note-item:nth-child(3n) {
+      background: rgba(237, 255, 235, 0.6);
+    }
+
+    .note-item:nth-child(3n):hover {
+      background: rgba(237, 255, 235, 0.8);
     }
 
     .note-preview {
-      font-size: 13px;
-      color: #000000;
-      margin-top: 5px;
+      font-size: 12px;
+      color: #555;
+      margin-top: 4px;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      font-weight: 500;
+      line-height: 1.4;
     }
 
     .note-date {
-      font-size: 11px;
-      color: #9929EA;
-      margin-top: 5px;
-      font-weight: 600;
+      font-size: 10px;
+      color: #888;
+      margin-top: 4px;
+      font-style: italic;
     }
 
     @media (max-width: 768px) {
@@ -530,10 +533,10 @@ function createFloatingWidget() {
     }
 
     .note-control-btn {
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
       border: none;
-      border-radius: 2px;
+      border-radius: 50%; /* Make buttons circular */
       background: rgba(0, 0, 0, 0.1);
       cursor: pointer;
       font-size: 10px;
@@ -542,13 +545,23 @@ function createFloatingWidget() {
       justify-content: center;
       transition: all 0.2s ease;
       color: #666;
-      box-shadow: none;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
 
     .note-control-btn:hover {
       background: rgba(0, 0, 0, 0.2);
       color: #333;
-      transform: scale(1.05);
+      transform: scale(1.1);
+    }
+
+    .note-control-btn.pin-btn.pinned {
+      background: rgba(255, 193, 7, 0.8);
+      color: #fff;
+    }
+
+    .note-control-btn.close-btn:hover {
+      background: rgba(220, 38, 38, 0.8);
+      color: #fff;
     }
 
     .sticky-note-textarea {
@@ -585,6 +598,108 @@ function createFloatingWidget() {
     .note-resize-handle:hover {
       background: linear-gradient(-45deg, transparent 35%, rgba(0, 0, 0, 0.3) 50%, transparent 65%);
     }
+
+    /* Note Options Modal */
+    .note-options-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .note-options-modal.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .note-options-content {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 400px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+      transform: scale(0.9);
+      transition: transform 0.3s ease;
+    }
+
+    .note-options-modal.open .note-options-content {
+      transform: scale(1);
+    }
+
+    .note-preview-section {
+      margin-bottom: 24px;
+      padding: 16px;
+      background: rgba(255, 251, 147, 0.3);
+      border-radius: 8px;
+      border-left: 4px solid #22c55e;
+    }
+
+    .note-preview-section h3 {
+      margin: 0 0 12px 0;
+      color: #374151;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .note-preview-text {
+      color: #555;
+      line-height: 1.5;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .note-date {
+      color: #888;
+      font-size: 12px;
+      font-style: italic;
+    }
+
+    /* Simple Note Items */
+    .note-item {
+      padding: 12px 16px;
+      margin: 8px 0;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 8px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      transition: all 0.2s ease;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .note-item:hover {
+      background: rgba(255, 255, 255, 1);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      transform: translateY(-1px);
+    }
+    
+    .note-preview {
+      color: #374151;
+      font-size: 14px;
+      line-height: 1.4;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    
+    .note-date {
+      font-size: 11px;
+      color: #9ca3af;
+      font-weight: 400;
+    }
+
+    /* ...existing code... */
   `;
   document.head.appendChild(style);
   document.body.appendChild(widget);
@@ -826,14 +941,22 @@ function setupWidgetEvents() {
     }, 50);
   }
 
-  // Menu button clicks
+  // Menu button clicks with debounce
+  let lastClickTime = 0;
   menu?.addEventListener("click", (e) => {
     const target = e.target as HTMLElement;
     const action = target.dataset.action;
+    const now = Date.now();
+
+    // Debounce clicks - prevent multiple clicks within 500ms
+    if (now - lastClickTime < 500) {
+      return;
+    }
+    lastClickTime = now;
 
     if (action) {
+      console.log("Menu button clicked:", action);
       handleMenuAction(action);
-      closeMenu();
     }
   });
 }
@@ -861,21 +984,36 @@ function closeMenu() {
 }
 
 function handleMenuAction(action: string) {
-  switch (action) {
-    case "add":
-      createNoteEditor();
-      break;
-    case "notes":
-      toggleNotesPanel();
-      break;
-    case "settings":
-      openSettingsModal();
-      break;
-  }
+  console.log("Menu action triggered:", action);
+  closeMenu(); // Close menu immediately when action is triggered
+  
+  // Add small delay to prevent multiple clicks
+  setTimeout(() => {
+    switch (action) {
+      case "add":
+        createNoteEditor();
+        break;
+      case "notes":
+        toggleNotesPanel();
+        break;
+      case "settings":
+        openSettingsModal();
+        break;
+    }
+  }, 100);
 }
 
 function createNoteEditor(initialText: string = "") {
-  createStickyNote(initialText);
+  const stickyNote = createStickyNote(initialText);
+  
+  // Auto-focus the textarea when created via shortcut
+  setTimeout(() => {
+    const textarea = stickyNote.querySelector(".sticky-note-textarea") as HTMLTextAreaElement;
+    if (textarea) {
+      textarea.focus();
+      textarea.setSelectionRange(textarea.value.length, textarea.value.length); // Place cursor at end
+    }
+  }, 100);
 }
 
 function createStickyNote(content: string = "") {
@@ -902,7 +1040,7 @@ function createStickyNote(content: string = "") {
     <div class="sticky-note-header">
       <span class="note-title">Sticky Note...</span>
       <div class="note-controls">
-        <button class="note-control-btn pin-btn" title="Pin/Unpin">📌</button>
+        <button class="note-control-btn pin-btn" title="Pin note (always on top)">📌</button>
         <button class="note-control-btn minimize-btn" title="Minimize">−</button>
         <button class="note-control-btn close-btn" title="Close">×</button>
       </div>
@@ -969,6 +1107,11 @@ function setupStickyNoteEvents(note: HTMLElement, noteId: string) {
     dragOffset.x = e.clientX - rect.left;
     dragOffset.y = e.clientY - rect.top;
 
+    // Add smooth cursor and disable transitions during drag
+    document.body.style.cursor = "grabbing";
+    note.style.transition = "none";
+    note.style.userSelect = "none";
+
     document.addEventListener("mousemove", handleDrag);
     document.addEventListener("mouseup", stopDrag);
     e.preventDefault();
@@ -980,16 +1123,25 @@ function setupStickyNoteEvents(note: HTMLElement, noteId: string) {
     const newX = e.clientX - dragOffset.x;
     const newY = e.clientY - dragOffset.y;
 
-    // Constrain to viewport
-    const maxX = window.innerWidth - note.offsetWidth;
-    const maxY = window.innerHeight - note.offsetHeight;
+    // Constrain to viewport with padding
+    const padding = 10;
+    const maxX = window.innerWidth - note.offsetWidth - padding;
+    const maxY = window.innerHeight - note.offsetHeight - padding;
 
-    note.style.left = Math.max(0, Math.min(maxX, newX)) + "px";
-    note.style.top = Math.max(0, Math.min(maxY, newY)) + "px";
+    // Use transform for smoother performance
+    const constrainedX = Math.max(padding, Math.min(maxX, newX));
+    const constrainedY = Math.max(padding, Math.min(maxY, newY));
+    
+    note.style.left = constrainedX + "px";
+    note.style.top = constrainedY + "px";
   }
 
   function stopDrag() {
     isDragging = false;
+    document.body.style.cursor = "";
+    note.style.transition = "all 0.3s ease";
+    note.style.userSelect = "";
+    
     document.removeEventListener("mousemove", handleDrag);
     document.removeEventListener("mouseup", stopDrag);
   }
@@ -1042,10 +1194,14 @@ function setupStickyNoteEvents(note: HTMLElement, noteId: string) {
     isPinned = !isPinned;
     if (isPinned) {
       note.classList.add("pinned");
-      (pinBtn as HTMLElement).style.background = "#4CAF50";
+      note.style.zIndex = "999999"; // Higher z-index for pinned notes
+      (pinBtn as HTMLElement).classList.add("pinned");
+      (pinBtn as HTMLElement).title = "Unpin note";
     } else {
       note.classList.remove("pinned");
-      (pinBtn as HTMLElement).style.background = "";
+      note.style.zIndex = "999997"; // Normal z-index
+      (pinBtn as HTMLElement).classList.remove("pinned");
+      (pinBtn as HTMLElement).title = "Pin note (always on top)";
     }
   });
 }
@@ -1208,13 +1364,23 @@ async function refreshNotesList() {
       )
       .join("");
 
-    // Click to edit note
+    // Simple click to edit note - no inline buttons
     notesList.querySelectorAll(".note-item").forEach((item) => {
       item.addEventListener("click", () => {
         const noteId = (item as HTMLElement).dataset.noteId;
         const note = notes.find((n: any) => n.id === noteId);
         if (note) {
-          editNote(note);
+          openNoteForEditing(note);
+        }
+      });
+      
+      // Right-click for delete
+      item.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+        const noteId = (item as HTMLElement).dataset.noteId;
+        const note = notes.find((n: any) => n.id === noteId);
+        if (note) {
+          deleteNoteDirectly(note);
         }
       });
     });
@@ -1223,52 +1389,36 @@ async function refreshNotesList() {
   }
 }
 
-function editNote(note: any) {
-  const modal = document.createElement("div");
-  modal.className = "sticky-modal";
-  modal.innerHTML = `
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 class="modal-title">✏️ Edit Note</h3>
-        <button class="modal-close">×</button>
-      </div>
-      <textarea class="note-input" autofocus>${note.content}</textarea>
-      <div class="button-group">
-        <button class="btn btn-primary update-note">💾 Update Note</button>
-        <button class="btn" style="background: #dc3545; color: white;" id="delete-note">🗑️ Delete</button>
-        <button class="btn btn-secondary cancel-edit">Cancel</button>
-      </div>
-    </div>
-  `;
 
-  document.body.appendChild(modal);
-  setTimeout(() => modal.classList.add("open"), 10);
 
-  const textarea = modal.querySelector(".note-input") as HTMLTextAreaElement;
-
-  function closeModal() {
-    modal.classList.remove("open");
-    setTimeout(() => modal.remove(), 300);
+function openNoteForEditing(note: any) {
+  // Create a sticky note with the existing content
+  const stickyNote = createStickyNote(note.content);
+  
+  // Add the existing note ID to the sticky note for updating
+  stickyNote.dataset.noteId = note.id;
+  
+  // Update the note title to show it's an existing note
+  const noteTitle = stickyNote.querySelector(".note-title") as HTMLElement;
+  if (noteTitle) {
+    noteTitle.textContent = "Edit Note";
   }
-
-  modal.querySelector(".modal-close")?.addEventListener("click", closeModal);
-  modal.querySelector(".cancel-edit")?.addEventListener("click", closeModal);
-
-  modal.querySelector(".update-note")?.addEventListener("click", async () => {
-    const content = textarea.value.trim();
-    if (content) {
-      await updateNote(note.id, content);
-      refreshNotesList();
-      closeModal();
-    }
-  });
-
-  modal.querySelector("#delete-note")?.addEventListener("click", async () => {
-    if (confirm("Are you sure you want to delete this note?")) {
-      await deleteNote(note.id);
-      refreshNotesList();
-      closeModal();
-    }
+  
+  // Override the auto-save to update the existing note instead of creating new
+  const textarea = stickyNote.querySelector(".sticky-note-textarea") as HTMLTextAreaElement;
+  let saveTimeout: any;
+  
+  // Remove the default input listener and add our custom one
+  textarea.removeEventListener("input", () => {});
+  textarea.addEventListener("input", () => {
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(async () => {
+      const content = textarea.value.trim();
+      if (content && note.id) {
+        await updateNote(note.id, content);
+        refreshNotesList();
+      }
+    }, 1000);
   });
 }
 
@@ -1379,9 +1529,8 @@ function setupMessageListener() {
       return;
     }
 
-    // Handle other actions
+    // Handle context menu note creation with selected text
     if (message.action === "create-note-with-selection") {
-      // Handle context menu note creation with selected text
       createNoteEditor(message.selectedText || "");
       sendResponse({ success: true });
       return;
@@ -1435,5 +1584,12 @@ async function loadWidgetPosition() {
     await browser.storage.local.remove("widgetPosition");
   } catch (error) {
     console.error("Error clearing position:", error);
+  }
+}
+
+function deleteNoteDirectly(note: any) {
+  if (confirm("Are you sure you want to delete this note?")) {
+    deleteNote(note.id);
+    refreshNotesList();
   }
 }
