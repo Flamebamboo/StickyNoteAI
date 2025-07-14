@@ -699,6 +699,70 @@ function createFloatingWidget() {
       font-weight: 400;
     }
 
+    /* Note Action Buttons */
+    .note-action-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px;
+      background: rgba(255, 255, 255, 0.3);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+      margin: 0;
+    }
+
+    .note-action-buttons.top-positioned {
+      border-bottom: none;
+      border-top: 1px solid rgba(0, 0, 0, 0.1);
+      order: -1; /* Ensure it appears first */
+    }
+
+    .action-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: none;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      font-weight: 500;
+    }
+
+    .action-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .action-btn.edit-btn {
+      background: #22c55e;
+      color: white;
+    }
+
+    .action-btn.edit-btn:hover {
+      background: #16a34a;
+    }
+
+    .action-btn.delete-btn {
+      background: #ef4444;
+      color: white;
+    }
+
+    .action-btn.delete-btn:hover {
+      background: #dc2626;
+    }
+
+    .action-btn.cancel-btn {
+      background: #6b7280;
+      color: white;
+    }
+
+    .action-btn.cancel-btn:hover {
+      background: #4b5563;
+    }
+
     /* ...existing code... */
   `;
   document.head.appendChild(style);
@@ -1364,23 +1428,14 @@ async function refreshNotesList() {
       )
       .join("");
 
-    // Simple click to edit note - no inline buttons
+    // Click to edit note
     notesList.querySelectorAll(".note-item").forEach((item) => {
       item.addEventListener("click", () => {
         const noteId = (item as HTMLElement).dataset.noteId;
         const note = notes.find((n: any) => n.id === noteId);
         if (note) {
+          // Open the note for editing
           openNoteForEditing(note);
-        }
-      });
-      
-      // Right-click for delete
-      item.addEventListener("contextmenu", (e) => {
-        e.preventDefault();
-        const noteId = (item as HTMLElement).dataset.noteId;
-        const note = notes.find((n: any) => n.id === noteId);
-        if (note) {
-          deleteNoteDirectly(note);
         }
       });
     });
@@ -1403,6 +1458,65 @@ function openNoteForEditing(note: any) {
   if (noteTitle) {
     noteTitle.textContent = "Edit Note";
   }
+
+  // Add circular action buttons merged with the note
+  const actionButtons = document.createElement("div");
+  actionButtons.className = "note-action-buttons";
+  actionButtons.innerHTML = `
+    <button class="action-btn edit-btn" title="Save & Close">✓</button>
+    <button class="action-btn delete-btn" title="Delete Note">🗑️</button>
+    <button class="action-btn cancel-btn" title="Cancel">×</button>
+  `;
+  
+  // Initially place buttons after header (default position)
+  const header = stickyNote.querySelector(".sticky-note-header");
+  if (header) {
+    header.after(actionButtons);
+  }
+
+  // Check position after the note is fully positioned and adjust if needed
+  setTimeout(() => {
+    const noteRect = stickyNote.getBoundingClientRect();
+    const windowHeight = window.innerHeight;
+    const isInLowerHalf = noteRect.top > windowHeight / 2;
+    
+    if (isInLowerHalf) {
+      // Move buttons to top position
+      actionButtons.classList.add("top-positioned");
+      if (header) {
+        header.before(actionButtons);
+      }
+    }
+  }, 50); // Small delay to ensure positioning is complete
+
+  // Add event listeners for action buttons
+  const editBtn = actionButtons.querySelector(".edit-btn");
+  const deleteBtn = actionButtons.querySelector(".delete-btn");
+  const cancelBtn = actionButtons.querySelector(".cancel-btn");
+
+  editBtn?.addEventListener("click", () => {
+    // Save and close
+    const textarea = stickyNote.querySelector(".sticky-note-textarea") as HTMLTextAreaElement;
+    const content = textarea.value.trim();
+    if (content) {
+      updateNote(note.id, content);
+      refreshNotesList();
+    }
+    stickyNote.remove();
+  });
+
+  deleteBtn?.addEventListener("click", () => {
+    if (confirm("Are you sure you want to delete this note?")) {
+      deleteNote(note.id);
+      refreshNotesList();
+      stickyNote.remove();
+    }
+  });
+
+  cancelBtn?.addEventListener("click", () => {
+    // Just close without saving
+    stickyNote.remove();
+  });
   
   // Override the auto-save to update the existing note instead of creating new
   const textarea = stickyNote.querySelector(".sticky-note-textarea") as HTMLTextAreaElement;
@@ -1593,3 +1707,5 @@ function deleteNoteDirectly(note: any) {
     refreshNotesList();
   }
 }
+
+
