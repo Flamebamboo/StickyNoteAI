@@ -165,6 +165,14 @@ function createFloatingWidget() {
       pointer-events: none;
     }
 
+    .widget-menu.top-positioned {
+      top: auto;
+      bottom: 100%;
+      margin-top: 0;
+      margin-bottom: 10px;
+      flex-direction: column-reverse; /* Reverse order so buttons appear naturally */
+    }
+
     .widget-menu.open {
       opacity: 1;
       visibility: visible;
@@ -1028,7 +1036,22 @@ function setupWidgetEvents() {
 function openMenu() {
   if (isDragging) return;
   const menu = document.getElementById("widget-menu");
-  if (menu) {
+  const widget = document.getElementById("sticky-note-widget");
+  
+  if (menu && widget) {
+    // Check if widget is in the lower half of the screen
+    const widgetRect = widget.getBoundingClientRect();
+    const windowHeight = window.innerHeight;
+    const isInLowerHalf = widgetRect.top > windowHeight / 2;
+    
+    if (isInLowerHalf) {
+      // Position menu above the widget
+      menu.classList.add("top-positioned");
+    } else {
+      // Position menu below the widget (default)
+      menu.classList.remove("top-positioned");
+    }
+    
     menu.classList.add("open");
     isMenuOpen = true;
   }
