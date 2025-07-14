@@ -463,30 +463,29 @@ function createFloatingWidget() {
     /* Sticky Note Styles */
     .sticky-note {
       position: fixed;
-      width: 300px;
-      height: 200px;
-      background: #FAEB92;
-      border-radius: 15px 15px 5px 15px;
+      width: 280px;
+      height: 180px;
+      background: rgba(255, 251, 147, 0.95); /* Classic yellow sticky note */
+      border-radius: 0px;
       box-shadow: 
-        0 8px 25px rgba(153, 41, 234, 0.6), 
-        0 0 0 3px #000000,
-        0 4px 15px rgba(204, 102, 218, 0.5);
+        0 4px 12px rgba(0, 0, 0, 0.15),
+        0 1px 4px rgba(0, 0, 0, 0.1);
       z-index: 999997;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      transform: scale(0.8) rotate(-2deg);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      transform: scale(0.9) rotate(var(--note-rotation, -1deg));
       opacity: 0;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      border: 3px solid #000000;
-      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+      border: none;
+      backdrop-filter: blur(2px);
     }
 
     .sticky-note.open {
-      transform: scale(1) rotate(0deg);
+      transform: scale(1) rotate(var(--note-rotation, 0deg));
       opacity: 1;
     }
 
     .sticky-note.minimized {
-      height: 40px;
+      height: 36px;
       overflow: hidden;
     }
 
@@ -499,30 +498,30 @@ function createFloatingWidget() {
     }
 
     .sticky-note.pinned {
-      border: 3px solid #9929EA;
+      border: 2px solid rgba(255, 193, 7, 0.6);
       box-shadow: 
-        0 8px 25px rgba(153, 41, 234, 0.8), 
-        0 0 0 3px rgba(153, 41, 234, 0.5),
-        0 4px 15px rgba(153, 41, 234, 0.6);
+        0 6px 16px rgba(255, 193, 7, 0.2),
+        0 2px 8px rgba(0, 0, 0, 0.1);
+      transform: scale(1) rotate(0deg) !important;
     }
 
     .sticky-note-header {
-      background: #FDFFB8;
+      background: transparent;
       padding: 8px 12px;
-      border-radius: 12px 12px 0 0;
+      border-radius: 0;
       cursor: move;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 3px solid #000000;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
       user-select: none;
     }
 
     .note-title {
       font-size: 12px;
-      font-weight: 600;
-      color: #000000;
-      text-shadow: 0 1px 2px rgba(250, 235, 146, 0.8);
+      font-weight: 500;
+      color: #666;
+      text-shadow: none;
     }
 
     .note-controls {
@@ -531,45 +530,44 @@ function createFloatingWidget() {
     }
 
     .note-control-btn {
-      width: 20px;
-      height: 20px;
-      border: 2px solid #000000;
-      border-radius: 50%;
-      background: #FDFFB8;
+      width: 18px;
+      height: 18px;
+      border: none;
+      border-radius: 2px;
+      background: rgba(0, 0, 0, 0.1);
       cursor: pointer;
       font-size: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: all 0.2s ease;
-      color: #000000;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+      color: #666;
+      box-shadow: none;
     }
 
     .note-control-btn:hover {
-      background: #9929EA;
-      color: #FAEB92;
-      transform: scale(1.1);
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+      background: rgba(0, 0, 0, 0.2);
+      color: #333;
+      transform: scale(1.05);
     }
 
     .sticky-note-textarea {
-      width: calc(100% - 24px);
-      height: calc(100% - 60px);
-      margin: 12px;
+      width: calc(100% - 16px);
+      height: calc(100% - 50px);
+      margin: 8px;
       border: none;
       background: transparent;
       resize: none;
       outline: none;
-      font-family: 'Comic Sans MS', cursive, sans-serif;
-      font-size: 14px;
-      color: #000000;
-      line-height: 1.4;
-      placeholder-color: rgba(0, 0, 0, 0.6);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 13px;
+      color: #333;
+      line-height: 1.5;
+      placeholder-color: rgba(0, 0, 0, 0.4);
     }
 
     .sticky-note-textarea::placeholder {
-      color: rgba(0, 0, 0, 0.6);
+      color: rgba(0, 0, 0, 0.4);
       font-style: italic;
     }
 
@@ -580,12 +578,12 @@ function createFloatingWidget() {
       width: 12px;
       height: 12px;
       cursor: nw-resize;
-      background: linear-gradient(-45deg, transparent 40%, rgba(0, 0, 0, 0.7) 50%, transparent 60%);
-      border-radius: 0 0 3px 0;
+      background: linear-gradient(-45deg, transparent 40%, rgba(0, 0, 0, 0.2) 50%, transparent 60%);
+      border-radius: 0;
     }
 
     .note-resize-handle:hover {
-      background: linear-gradient(-45deg, transparent 35%, rgba(153, 41, 234, 0.8) 50%, transparent 65%);
+      background: linear-gradient(-45deg, transparent 35%, rgba(0, 0, 0, 0.3) 50%, transparent 65%);
     }
   `;
   document.head.appendChild(style);
@@ -885,6 +883,21 @@ function createStickyNote(content: string = "") {
   const note = document.createElement("div");
   note.className = "sticky-note";
   note.id = `sticky-note-${noteId}`;
+  
+  // Array of realistic sticky note colors
+  const stickyColors = [
+    'rgba(255, 251, 147, 0.95)', // Classic yellow
+    'rgba(255, 237, 213, 0.95)', // Light peach
+    'rgba(237, 255, 235, 0.95)', // Light green
+    'rgba(235, 245, 255, 0.95)', // Light blue
+    'rgba(255, 235, 255, 0.95)', // Light pink
+    'rgba(255, 243, 205, 0.95)', // Light orange
+    'rgba(243, 235, 255, 0.95)', // Light purple
+  ];
+  
+  // Select random color
+  const randomColor = stickyColors[Math.floor(Math.random() * stickyColors.length)];
+  
   note.innerHTML = `
     <div class="sticky-note-header">
       <span class="note-title">Sticky Note...</span>
@@ -897,6 +910,13 @@ function createStickyNote(content: string = "") {
     <textarea class="sticky-note-textarea" placeholder="Write your note here...">${content}</textarea>
     <div class="note-resize-handle"></div>
   `;
+
+  // Apply the random color and slight rotation
+  note.style.background = randomColor;
+  
+  // Add slight random rotation for realistic look
+  const randomRotation = (Math.random() - 0.5) * 4; // -2 to +2 degrees
+  note.style.setProperty('--note-rotation', `${randomRotation}deg`);
 
   document.body.appendChild(note);
 

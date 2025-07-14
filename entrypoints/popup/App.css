@@ -257,105 +257,114 @@ kbd {
 
 .notes-list {
   display: grid;
-  gap: 16px;
+  gap: 12px;
 }
 
 .note-card {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 16px;
-  padding: 20px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(255, 251, 147, 0.85); /* Light yellow sticky note color */
+  backdrop-filter: blur(5px);
+  border: none;
+  border-radius: 3px;
+  padding: 16px;
+  transition: all 0.2s ease;
   position: relative;
-  overflow: hidden;
+  transform: rotate(-0.5deg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), 
+              0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.note-card::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899);
-  opacity: 0;
-  transition: opacity 0.3s ease;
+.note-card:nth-child(2n) {
+  background: rgba(255, 237, 213, 0.85); /* Light peach */
+  transform: rotate(0.8deg);
+}
+
+.note-card:nth-child(3n) {
+  background: rgba(237, 255, 235, 0.85); /* Light green */
+  transform: rotate(-0.3deg);
+}
+
+.note-card:nth-child(4n) {
+  background: rgba(235, 245, 255, 0.85); /* Light blue */
+  transform: rotate(0.6deg);
+}
+
+.note-card:nth-child(5n) {
+  background: rgba(255, 235, 255, 0.85); /* Light pink */
+  transform: rotate(-0.7deg);
 }
 
 .note-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
-  background: rgba(255, 255, 255, 0.9);
-}
-
-.note-card:hover::before {
-  opacity: 1;
+  transform: rotate(0deg) translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 
+              0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .note-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 12px;
-  gap: 12px;
+  margin-bottom: 8px;
+  gap: 8px;
 }
 
 .note-header h3 {
   margin: 0;
-  color: #1e293b;
-  font-size: 16px;
+  color: #4a4a4a;
+  font-size: 14px;
   font-weight: 600;
-  line-height: 1.4;
+  line-height: 1.3;
   flex: 1;
+  font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
 .btn-delete {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  background: rgba(220, 38, 38, 0.1);
+  border: none;
   cursor: pointer;
-  padding: 8px;
-  border-radius: 8px;
+  padding: 4px;
+  border-radius: 2px;
   transition: all 0.2s ease;
-  font-size: 14px;
+  font-size: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.7;
+  opacity: 0.6;
+  color: #dc2626;
 }
 
 .btn-delete:hover {
-  background: rgba(239, 68, 68, 0.15);
-  border-color: rgba(239, 68, 68, 0.3);
-  transform: scale(1.05);
+  background: rgba(220, 38, 38, 0.2);
   opacity: 1;
+  transform: scale(1.1);
 }
 
 .note-content {
-  color: #475569;
-  margin: 0 0 16px 0;
-  line-height: 1.6;
-  font-size: 14px;
+  color: #555;
+  margin: 0 0 8px 0;
+  line-height: 1.4;
+  font-size: 13px;
+  font-family: 'Segoe UI', system-ui, sans-serif;
   overflow: hidden;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
   -webkit-box-orient: vertical;
 }
 
 .note-meta {
-  font-size: 12px;
-  color: #94a3b8;
+  font-size: 10px;
+  color: #888;
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-weight: 500;
+  gap: 4px;
+  font-weight: 400;
+  font-style: italic;
 }
 
 .note-meta::before {
-  content: "📅";
-  font-size: 10px;
+  content: "";
+  font-size: 8px;
 }
 
 /* Settings Section */
@@ -386,11 +395,12 @@ kbd {
 }
 
 .setting-item {
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 12px;
+  background: rgba(255, 251, 147, 0.6);
+  backdrop-filter: blur(3px);
+  border-radius: 2px;
+  border: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .setting-label {

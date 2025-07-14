@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StickyNoteAI - New Design Preview</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            margin: 0;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        h2 {
+            color: #555;
+            margin: 30px 0 15px 0;
+        }
+        
+        /* Popup Notes Design */
+        .popup-notes {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 40px;
+        }
+        
+        .note-card {
+            background: rgba(255, 251, 147, 0.85);
+            backdrop-filter: blur(5px);
+            border: none;
+            border-radius: 3px;
+            padding: 16px;
+            transition: all 0.2s ease;
+            position: relative;
+            transform: rotate(-0.5deg);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), 
+                        0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .note-card:nth-child(2) {
+            background: rgba(255, 237, 213, 0.85);
+            transform: rotate(0.8deg);
+        }
+
+        .note-card:nth-child(3) {
+            background: rgba(237, 255, 235, 0.85);
+            transform: rotate(-0.3deg);
+        }
+
+        .note-card:nth-child(4) {
+            background: rgba(235, 245, 255, 0.85);
+            transform: rotate(0.6deg);
+        }
+
+        .note-card:hover {
+            transform: rotate(0deg) translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 
+                        0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .note-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            gap: 8px;
+        }
+
+        .note-header h3 {
+            margin: 0;
+            color: #4a4a4a;
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.3;
+            flex: 1;
+        }
+
+        .btn-delete {
+            background: rgba(220, 38, 38, 0.1);
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 2px;
+            color: #dc2626;
+            font-size: 12px;
+        }
+
+        .note-content {
+            color: #555;
+            margin: 0 0 8px 0;
+            line-height: 1.4;
+            font-size: 13px;
+        }
+
+        .note-meta {
+            font-size: 10px;
+            color: #888;
+            font-style: italic;
+        }
+        
+        /* Floating Sticky Notes Design */
+        .floating-notes {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .sticky-note {
+            width: 280px;
+            height: 180px;
+            background: rgba(255, 251, 147, 0.95);
+            border-radius: 0px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15),
+                        0 1px 4px rgba(0, 0, 0, 0.1);
+            transform: rotate(-1deg);
+            backdrop-filter: blur(2px);
+            border: none;
+        }
+        
+        .sticky-note:nth-child(2) {
+            background: rgba(255, 237, 213, 0.95);
+            transform: rotate(1.2deg);
+        }
+        
+        .sticky-note:nth-child(3) {
+            background: rgba(237, 255, 235, 0.95);
+            transform: rotate(-0.8deg);
+        }
+        
+        .sticky-note:nth-child(4) {
+            background: rgba(235, 245, 255, 0.95);
+            transform: rotate(0.5deg);
+        }
+        
+        .sticky-note-header {
+            background: transparent;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .note-title {
+            font-size: 12px;
+            font-weight: 500;
+            color: #666;
+        }
+
+        .note-controls {
+            display: flex;
+            gap: 4px;
+        }
+
+        .note-control-btn {
+            width: 18px;
+            height: 18px;
+            border: none;
+            border-radius: 2px;
+            background: rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            font-size: 10px;
+            color: #666;
+        }
+
+        .sticky-note-textarea {
+            width: calc(100% - 16px);
+            height: calc(100% - 50px);
+            margin: 8px;
+            border: none;
+            background: transparent;
+            resize: none;
+            outline: none;
+            font-size: 13px;
+            color: #333;
+            line-height: 1.5;
+        }
+        
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 30px 0;
+        }
+        
+        .old-design, .new-design {
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .old-design {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+        }
+        
+        .new-design {
+            background: #fff;
+            border: 2px solid #28a745;
+        }
+        
+        .old-design h3, .new-design h3 {
+            margin-top: 0;
+            text-align: center;
+        }
+        
+        .old-design h3 {
+            color: #6c757d;
+        }
+        
+        .new-design h3 {
+            color: #28a745;
+        }
+        
+        ul {
+            padding-left: 20px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 StickyNoteAI - New Realistic Design</h1>
+        
+        <div class="comparison">
+            <div class="old-design">
+                <h3>❌ Old Design</h3>
+                <ul>
+                    <li>Heavy borders and gradients</li>
+                    <li>Complex backdrop filters</li>
+                    <li>Rounded corners</li>
+                    <li>Dark shadows</li>
+                    <li>Comic Sans font</li>
+                    <li>Bright purple/pink colors</li>
+                    <li>Complex animations</li>
+                </ul>
+            </div>
+            
+            <div class="new-design">
+                <h3>✅ New Design</h3>
+                <ul>
+                    <li>Clean, borderless design</li>
+                    <li>Light, transparent colors</li>
+                    <li>Square corners (like real notes)</li>
+                    <li>Subtle shadows</li>
+                    <li>System fonts (Segoe UI)</li>
+                    <li>Realistic sticky note colors</li>
+                    <li>Natural slight rotations</li>
+                </ul>
+            </div>
+        </div>
+        
+        <h2>📋 Popup Notes (in Extension Popup)</h2>
+        <div class="popup-notes">
+            <div class="note-card">
+                <div class="note-header">
+                    <h3>Meeting Notes</h3>
+                    <button class="btn-delete">×</button>
+                </div>
+                <div class="note-content">Remember to ask about the project timeline and budget allocation for Q2.</div>
+                <div class="note-meta">2 hours ago</div>
+            </div>
+            
+            <div class="note-card">
+                <div class="note-header">
+                    <h3>Study Reminders</h3>
+                    <button class="btn-delete">×</button>
+                </div>
+                <div class="note-content">Chapter 5: Linear Algebra - Review eigenvalues and eigenvectors for tomorrow's quiz.</div>
+                <div class="note-meta">5 hours ago</div>
+            </div>
+            
+            <div class="note-card">
+                <div class="note-header">
+                    <h3>Shopping List</h3>
+                    <button class="btn-delete">×</button>
+                </div>
+                <div class="note-content">- Milk
+- Bread
+- Coffee beans
+- Notebook for class</div>
+                <div class="note-meta">1 day ago</div>
+            </div>
+            
+            <div class="note-card">
+                <div class="note-header">
+                    <h3>Quick Idea</h3>
+                    <button class="btn-delete">×</button>
+                </div>
+                <div class="note-content">App idea: A study timer that automatically categorizes notes by subject using AI.</div>
+                <div class="note-meta">3 days ago</div>
+            </div>
+        </div>
+        
+        <h2>🌐 Floating Sticky Notes (on Web Pages)</h2>
+        <div class="floating-notes">
+            <div class="sticky-note">
+                <div class="sticky-note-header">
+                    <span class="note-title">Class Notes</span>
+                    <div class="note-controls">
+                        <button class="note-control-btn">📌</button>
+                        <button class="note-control-btn">−</button>
+                        <button class="note-control-btn">×</button>
+                    </div>
+                </div>
+                <textarea class="sticky-note-textarea" readonly>Professor mentioned this will be on the final exam:
+- Derivative of sin(x) = cos(x)
+- Integration by parts
+- Chain rule applications</textarea>
+            </div>
+            
+            <div class="sticky-note">
+                <div class="sticky-note-header">
+                    <span class="note-title">Assignment Due</span>
+                    <div class="note-controls">
+                        <button class="note-control-btn">📌</button>
+                        <button class="note-control-btn">−</button>
+                        <button class="note-control-btn">×</button>
+                    </div>
+                </div>
+                <textarea class="sticky-note-textarea" readonly>Math homework due Friday:
+- Pages 123-125
+- Problems 1-20 (odd numbers only)
+- Show all work!</textarea>
+            </div>
+            
+            <div class="sticky-note">
+                <div class="sticky-note-header">
+                    <span class="note-title">Research Ideas</span>
+                    <div class="note-controls">
+                        <button class="note-control-btn">📌</button>
+                        <button class="note-control-btn">−</button>
+                        <button class="note-control-btn">×</button>
+                    </div>
+                </div>
+                <textarea class="sticky-note-textarea" readonly>Paper topic possibilities:
+1. Climate change impact on agriculture
+2. AI in healthcare diagnosis
+3. Renewable energy economics</textarea>
+            </div>
+            
+            <div class="sticky-note">
+                <div class="sticky-note-header">
+                    <span class="note-title">Quick Note</span>
+                    <div class="note-controls">
+                        <button class="note-control-btn">📌</button>
+                        <button class="note-control-btn">−</button>
+                        <button class="note-control-btn">×</button>
+                    </div>
+                </div>
+                <textarea class="sticky-note-textarea" readonly>Don't forget to email the TA about office hours schedule change!</textarea>
+            </div>
+        </div>
+        
+        <div style="margin-top: 40px; padding: 20px; background: rgba(255, 251, 147, 0.3); border-radius: 8px; text-align: center;">
+            <h3>🎯 Design Goals Achieved</h3>
+            <p><strong>Realistic Appearance:</strong> Notes now look like actual sticky notes you'd find in real life</p>
+            <p><strong>Light & Simple:</strong> Clean colors and minimal styling for better focus</p>
+            <p><strong>Transparent Look:</strong> Subtle transparency maintains the stealth aspect</p>
+            <p><strong>No Borders:</strong> Clean, borderless design like real paper notes</p>
+        </div>
+    </div>
+</body>
+</html>
