@@ -718,12 +718,6 @@ function createFloatingWidget() {
       margin: 0;
     }
 
-    .note-action-buttons.top-positioned {
-      border-bottom: none;
-      border-top: 1px solid rgba(0, 0, 0, 0.1);
-      order: -1; /* Ensure it appears first */
-    }
-
     .action-btn {
       width: 32px;
       height: 32px;
@@ -1482,7 +1476,7 @@ function openNoteForEditing(note: any) {
     noteTitle.textContent = "Edit Note";
   }
 
-  // Add circular action buttons merged with the note
+  // Add circular action buttons merged with the note (always below header)
   const actionButtons = document.createElement("div");
   actionButtons.className = "note-action-buttons";
   actionButtons.innerHTML = `
@@ -1491,26 +1485,11 @@ function openNoteForEditing(note: any) {
     <button class="action-btn cancel-btn" title="Cancel">×</button>
   `;
   
-  // Initially place buttons after header (default position)
+  // Always place buttons after header (normal position)
   const header = stickyNote.querySelector(".sticky-note-header");
   if (header) {
     header.after(actionButtons);
   }
-
-  // Check position after the note is fully positioned and adjust if needed
-  setTimeout(() => {
-    const noteRect = stickyNote.getBoundingClientRect();
-    const windowHeight = window.innerHeight;
-    const isInLowerHalf = noteRect.top > windowHeight / 2;
-    
-    if (isInLowerHalf) {
-      // Move buttons to top position
-      actionButtons.classList.add("top-positioned");
-      if (header) {
-        header.before(actionButtons);
-      }
-    }
-  }, 50); // Small delay to ensure positioning is complete
 
   // Add event listeners for action buttons
   const editBtn = actionButtons.querySelector(".edit-btn");
