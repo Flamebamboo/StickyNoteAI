@@ -19,46 +19,39 @@ interface Theme {
     secondary: string;
     accent: string;
     background: string;
-    text: string;
     noteColors: string[];
   };
 }
 
+const themes: Theme[] = [
+  {
+    id: 'autumn',
+    name: 'Autumn',
+    description: 'Warm autumn colors with orange, red, and golden tones',
+    colors: {
+      primary: 'linear-gradient(135deg, #ff6b35 0%, #d84315 100%)',
+      secondary: 'linear-gradient(135deg, #ff8f00 0%, #ef6c00 100%)',
+      accent: '#8d4004',
+      background: 'linear-gradient(145deg, #fff3e0, #ffe0b2)',
+      noteColors: [
+        'rgba(255, 183, 77, 0.85)',  // Golden yellow
+        'rgba(255, 138, 101, 0.85)', // Coral orange
+        'rgba(198, 40, 40, 0.85)',   // Deep red
+        'rgba(191, 54, 12, 0.85)',   // Burnt orange
+        'rgba(239, 108, 0, 0.85)',   // Orange
+        'rgba(130, 119, 23, 0.85)',  // Golden brown
+      ]
+    }
+  }
+];
+
 function App() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [stealthMode, setStealthMode] = useState(false);
-  const [activeTab, setActiveTab] = useState<"notes" | "settings" | "themes">("notes");
-  const [activeTheme, setActiveTheme] = useState<string>("default");
+  const [activeTab, setActiveTab] = useState<"notes" | "themes" | "settings">("notes");
+  const [activeTheme, setActiveTheme] = useState<string>('default');
 
-  // Available themes
-  const themes: Theme[] = [
-    {
-      id: 'default',
-      name: 'Classic Colorful',
-      description: 'The original colorful sticky notes experience',
-      colors: {
-        primary: '#667eea',
-        secondary: '#764ba2',
-        accent: '#f093fb',
-        background: '#f8fafc',
-        text: '#1a202c',
-        noteColors: ['#fef3c7', '#dbeafe', '#fce7f3', '#ecfdf5', '#fed7d7', '#e6fffa']
-      }
-    },
-    {
-      id: 'autumn',
-      name: 'Autumn Vibes',
-      description: 'Warm earth tones inspired by fall colors',
-      colors: {
-        primary: '#d97706',
-        secondary: '#dc2626',
-        accent: '#f59e0b',
-        background: '#fef7ed',
-        text: '#451a03',
-        noteColors: ['#fed7aa', '#fecaca', '#fde68a', '#d1fae5', '#ddd6fe', '#f3e8ff']
-      }
-    }
-  ];  useEffect(() => {
+  useEffect(() => {
     // Load notes from storage
     loadNotes();
     loadSettings();
@@ -72,7 +65,6 @@ function App() {
         const newSettings = changes["sticky-settings"].newValue;
         if (newSettings) {
           setStealthMode(newSettings.stealthMode || false);
-          setActiveTheme(newSettings.theme || "default");
         }
       }
     };
@@ -83,23 +75,6 @@ function App() {
       browser.storage.onChanged.removeListener(handleStorageChange);
     };
   }, []);
-
-  // Apply theme to document
-  useEffect(() => {
-    const theme = themes.find(t => t.id === activeTheme) || themes[0];
-    document.documentElement.style.setProperty('--theme-primary', theme.colors.primary);
-    document.documentElement.style.setProperty('--theme-secondary', theme.colors.secondary);
-    document.documentElement.style.setProperty('--theme-accent', theme.colors.accent);
-    document.documentElement.style.setProperty('--theme-background', theme.colors.background);
-    
-    // Set note colors
-    theme.colors.noteColors.forEach((color, index) => {
-      document.documentElement.style.setProperty(`--theme-note-${index + 1}`, color);
-    });
-
-    // Set theme class on body
-    document.body.className = `theme-${activeTheme}`;
-  }, [activeTheme]);
 
   const loadNotes = async () => {
     try {
@@ -118,7 +93,15 @@ function App() {
         const settings = result["sticky-settings"];
         if (settings) {
           setStealthMode(settings.stealthMode || false);
-          setActiveTheme(settings.theme || "default");
+          const theme = settings.activeTheme || 'default';
+          setActiveTheme(theme);
+          
+          // Apply theme to popup body
+          if (theme === 'default') {
+            document.body.removeAttribute('data-theme');
+          } else {
+            document.body.setAttribute('data-theme', theme);
+          }
         }
       });
     } catch (error) {
@@ -150,7 +133,7 @@ function App() {
   const toggleStealthMode = () => {
     const newStealthMode = !stealthMode;
     setStealthMode(newStealthMode);
-    saveSettings({ stealthMode: newStealthMode, theme: activeTheme });
+    saveSettings({ stealthMode: newStealthMode, activeTheme });
 
     // Send message to content script to toggle stealth
     browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -165,31 +148,22 @@ function App() {
 
   const selectTheme = (themeId: string) => {
     setActiveTheme(themeId);
-    const selectedTheme = themes.find(t => t.id === themeId);
-    
-    // Save theme selection
-    saveSettings({ stealthMode, theme: themeId });
+    saveSettings({ stealthMode, activeTheme: themeId });
 
-    // Apply theme colors to popup CSS custom properties
-    if (selectedTheme) {
-      const root = document.documentElement;
-      root.style.setProperty('--theme-primary', selectedTheme.colors.primary);
-      root.style.setProperty('--theme-secondary', selectedTheme.colors.secondary);
-      root.style.setProperty('--theme-background', selectedTheme.colors.background);
-      root.style.setProperty('--theme-text', selectedTheme.colors.text);
-      
-      // Apply note colors
-      selectedTheme.colors.noteColors.forEach((color, index) => {
-        root.style.setProperty(`--theme-note-color-${index}`, color);
-      });
+    // Apply theme to popup body
+    if (themeId === 'default') {
+      document.body.removeAttribute('data-theme');
+    } else {
+      document.body.setAttribute('data-theme', themeId);
     }
 
-    // Send message to content script to apply theme
+    // Send theme change to content script
     browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs[0]?.id && selectedTheme) {
+      if (tabs[0]?.id) {
         browser.tabs.sendMessage(tabs[0].id, {
-          action: "themeChanged",
-          theme: selectedTheme,
+          action: "changeTheme",
+          themeId: themeId,
+          theme: themes.find(t => t.id === themeId),
         });
       }
     });
@@ -270,43 +244,61 @@ function App() {
 
         {activeTab === "themes" && (
           <div className="themes-section">
-            <h2>Themes</h2>
-            <p className="section-description">Choose your preferred theme to customize the look and feel of your notes</p>
-            
+            <div className="section-header">
+              <h2>Themes</h2>
+              <div className="current-theme">
+                Current: <span className="theme-name">{activeTheme === 'default' ? 'Default' : themes.find(t => t.id === activeTheme)?.name}</span>
+              </div>
+            </div>
+
+            <div className="theme-description">
+              <p>Choose a theme to change the overall look and feel of your sticky notes experience!</p>
+            </div>
+
             <div className="themes-grid">
+              {/* Default Theme */}
+              <div className={`theme-card ${activeTheme === 'default' ? 'active' : ''}`}>
+                <div className="theme-preview default-preview">
+                  <div className="preview-note">Default</div>
+                  <div className="preview-note">Notes</div>
+                </div>
+                <div className="theme-info">
+                  <h3>Default</h3>
+                  <p>Classic sticky notes with soft pastel colors</p>
+                  <button 
+                    className={`theme-btn ${activeTheme === 'default' ? 'active' : ''}`}
+                    onClick={() => selectTheme('default')}
+                  >
+                    {activeTheme === 'default' ? '✓ Active' : 'Activate'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Themes Grid */}
               {themes.map((theme) => (
                 <div key={theme.id} className={`theme-card ${activeTheme === theme.id ? 'active' : ''}`}>
-                  <div className="theme-preview">
-                    <div className="preview-header" style={{ background: `linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.secondary})` }}>
-                      <div className="preview-title">StickyNoteAI</div>
+                  <div className={`theme-preview ${theme.id}-preview`}>
+                    <div 
+                      className="preview-note"
+                      style={{ background: theme.colors.noteColors[0] }}
+                    >
+                      Note 1
                     </div>
-                    <div className="preview-content" style={{ background: theme.colors.background }}>
-                      <div className="preview-notes">
-                        {theme.colors.noteColors.slice(0, 3).map((color, index) => (
-                          <div 
-                            key={index} 
-                            className="preview-note" 
-                            style={{ 
-                              background: color,
-                              transform: `rotate(${(index - 1) * 2}deg)`
-                            }}
-                          >
-                            Sample Note {index + 1}
-                          </div>
-                        ))}
-                      </div>
+                    <div 
+                      className="preview-note"
+                      style={{ background: theme.colors.noteColors[1] }}
+                    >
+                      Note 2
                     </div>
                   </div>
-                  
                   <div className="theme-info">
                     <h3>{theme.name}</h3>
                     <p>{theme.description}</p>
-                    
                     <button 
-                      className={`theme-button ${activeTheme === theme.id ? 'active' : ''}`}
+                      className={`theme-btn ${activeTheme === theme.id ? 'active' : ''}`}
                       onClick={() => selectTheme(theme.id)}
                     >
-                      {activeTheme === theme.id ? '✓ Active' : 'Select Theme'}
+                      {activeTheme === theme.id ? '✓ Active' : 'Activate'}
                     </button>
                   </div>
                 </div>
@@ -314,7 +306,7 @@ function App() {
             </div>
 
             <div className="theme-note">
-              <p><strong>💡 Pro Tip:</strong> Your selected theme will apply to all notes across all websites!</p>
+              <p><strong>Note:</strong> Theme changes will apply to new notes. Existing notes will keep their current appearance until refreshed.</p>
             </div>
           </div>
         )}
