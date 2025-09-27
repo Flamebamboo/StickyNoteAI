@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StickyNoteAI Theme Preview</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 40px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .themes-showcase {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .theme-demo {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border: 2px solid #e2e8f0;
+        }
+
+        .theme-demo.autumn {
+            background: #fef7ed;
+            border-color: #fed7aa;
+        }
+
+        .theme-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #1e293b;
+        }
+
+        .theme-demo.autumn .theme-title {
+            color: #451a03;
+        }
+
+        .popup-preview {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .popup-preview.autumn {
+            background: #fef7ed;
+            border-color: #fed7aa;
+        }
+
+        .popup-header {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            color: white;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .default .popup-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .autumn .popup-header {
+            background: linear-gradient(135deg, #d97706, #dc2626);
+        }
+
+        .notes-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .note-card {
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transform: rotate(-1deg);
+            transition: transform 0.2s ease;
+        }
+
+        .note-card:nth-child(2) {
+            transform: rotate(1deg);
+        }
+
+        .note-card:nth-child(3) {
+            transform: rotate(-0.5deg);
+        }
+
+        .note-card:hover {
+            transform: rotate(0deg) scale(1.05);
+        }
+
+        /* Default theme note colors */
+        .default .note-card:nth-child(1) { background: #fef3c7; color: #92400e; }
+        .default .note-card:nth-child(2) { background: #dbeafe; color: #1e40af; }
+        .default .note-card:nth-child(3) { background: #fce7f3; color: #be185d; }
+        .default .note-card:nth-child(4) { background: #ecfdf5; color: #065f46; }
+        .default .note-card:nth-child(5) { background: #fed7d7; color: #991b1b; }
+        .default .note-card:nth-child(6) { background: #e6fffa; color: #134e4a; }
+
+        /* Autumn theme note colors */
+        .autumn .note-card:nth-child(1) { background: #fed7aa; color: #9a3412; }
+        .autumn .note-card:nth-child(2) { background: #fecaca; color: #991b1b; }
+        .autumn .note-card:nth-child(3) { background: #fde68a; color: #92400e; }
+        .autumn .note-card:nth-child(4) { background: #d1fae5; color: #065f46; }
+        .autumn .note-card:nth-child(5) { background: #ddd6fe; color: #5b21b6; }
+        .autumn .note-card:nth-child(6) { background: #f3e8ff; color: #6b21a8; }
+
+        .theme-description {
+            text-align: center;
+            color: #64748b;
+            font-style: italic;
+            margin-bottom: 15px;
+        }
+
+        .features {
+            background: rgba(255,255,255,0.9);
+            border-radius: 12px;
+            padding: 30px;
+            margin-top: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .features h2 {
+            color: #1e293b;
+            margin-bottom: 20px;
+        }
+
+        .features ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .features li {
+            padding: 8px 0;
+            color: #374151;
+        }
+
+        .features li::before {
+            content: "✨ ";
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 StickyNoteAI Themes Preview</h1>
+        
+        <div class="themes-showcase">
+            <!-- Default Theme -->
+            <div class="theme-demo default">
+                <h3 class="theme-title">Classic Colorful Theme</h3>
+                <p class="theme-description">The original colorful sticky notes experience</p>
+                
+                <div class="popup-preview">
+                    <div class="popup-header">StickyNoteAI - Classic Theme</div>
+                    <div class="notes-grid">
+                        <div class="note-card">Math Formula:<br>E = mc²</div>
+                        <div class="note-card">Meeting at 3 PM<br>Conference Room B</div>
+                        <div class="note-card">Buy groceries:<br>Milk, Bread, Eggs</div>
+                        <div class="note-card">Call Mom<br>Birthday reminder</div>
+                        <div class="note-card">Project deadline:<br>Friday 5 PM</div>
+                        <div class="note-card">Gym workout:<br>Chest & Triceps</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Autumn Theme -->
+            <div class="theme-demo autumn">
+                <h3 class="theme-title">Autumn Vibes Theme</h3>
+                <p class="theme-description">Warm earth tones inspired by fall colors</p>
+                
+                <div class="popup-preview autumn">
+                    <div class="popup-header">StickyNoteAI - Autumn Theme</div>
+                    <div class="notes-grid">
+                        <div class="note-card">Math Formula:<br>E = mc²</div>
+                        <div class="note-card">Meeting at 3 PM<br>Conference Room B</div>
+                        <div class="note-card">Buy groceries:<br>Milk, Bread, Eggs</div>
+                        <div class="note-card">Call Mom<br>Birthday reminder</div>
+                        <div class="note-card">Project deadline:<br>Friday 5 PM</div>
+                        <div class="note-card">Gym workout:<br>Chest & Triceps</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="features">
+            <h2>🚀 New Theme System Features</h2>
+            <ul>
+                <li>Beautiful theme selection interface in the popup</li>
+                <li>Real-time preview of color schemes before applying</li>
+                <li>Themes apply to both popup interface and website notes</li>
+                <li>Persistent theme selection across browser sessions</li>
+                <li>Smooth transitions when switching between themes</li>
+                <li>Autumn theme with warm, earth-inspired colors</li>
+                <li>Classic colorful theme maintains the original experience</li>
+                <li>Easy to expand with more themes in the future</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
