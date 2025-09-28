@@ -294,9 +294,133 @@ kbd {
 }
 
 .note-card:hover {
-  transform: rotate(0deg) translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 
-              0 2px 6px rgba(0, 0, 0, 0.1);
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  transform: translateY(-2px);
+}
+
+/* Search and Filter Section */
+.search-section {
+  margin-bottom: 24px;
+  padding: 20px;
+  background: rgba(248, 250, 252, 0.6);
+  border-radius: 16px;
+  border: 1px solid rgba(226, 232, 240, 0.5);
+}
+
+.search-bar {
+  margin-bottom: 16px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid rgba(226, 232, 240, 0.6);
+  border-radius: 25px;
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.9);
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.search-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  background: rgba(255, 255, 255, 1);
+}
+
+.category-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.category-btn {
+  padding: 8px 14px;
+  border: 2px solid rgba(226, 232, 240, 0.6);
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #64748b;
+}
+
+.category-btn:hover {
+  background: rgba(248, 250, 252, 1);
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+.category-btn.active {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* Note Card Enhancements */
+.note-title-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.note-title-section h3 {
+  margin: 0;
+}
+
+.category-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+  align-self: flex-start;
+  opacity: 0.9;
+}
+
+.category-study {
+  background: rgba(59, 130, 246, 0.1);
+  color: #1d4ed8;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.category-tasks {
+  background: rgba(34, 197, 94, 0.1);
+  color: #15803d;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.category-ideas {
+  background: rgba(251, 191, 36, 0.1);
+  color: #d97706;
+  border: 1px solid rgba(251, 191, 36, 0.2);
+}
+
+.category-general {
+  background: rgba(107, 114, 128, 0.1);
+  color: #374151;
+  border: 1px solid rgba(107, 114, 128, 0.2);
+}
+
+.btn-clear-search {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 500;
+  margin-top: 12px;
+  transition: all 0.3s ease;
+}
+
+.btn-clear-search:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
 }
 
 .note-header {
@@ -678,142 +802,395 @@ kbd {
 
 /* Autumn Theme Styles */
 body[data-theme="autumn"] {
-  --primary-color: #dc2626;
-  --secondary-color: #ea580c;
-  --accent-color: #f59e0b;
-  --background-color: #451a03;
-  --surface-color: #78350f;
-  --text-color: #fef3c7;
-  --border-color: rgba(251, 191, 36, 0.3);
+  --primary-color: #8B4513;
+  --secondary-color: #CD853F;
+  --accent-color: #DAA520;
+  --background-color: #FFF8DC;
+  --surface-color: #F5DEB3;
+  --text-color: #8B4513;
+  --border-color: rgba(139, 69, 19, 0.3);
 }
 
 /* Autumn Theme - Popup Container */
 body[data-theme="autumn"] .popup-container {
   background: linear-gradient(135deg, 
-    rgba(120, 53, 15, 0.95) 0%,
-    rgba(69, 26, 3, 0.95) 50%,
-    rgba(92, 28, 2, 0.95) 100%
+    rgba(255, 248, 220, 0.98) 0%,
+    rgba(245, 222, 179, 0.98) 50%,
+    rgba(222, 184, 135, 0.98) 100%
   );
-  border: 2px solid rgba(251, 191, 36, 0.4);
+  border: 2px solid rgba(139, 69, 19, 0.5);
   box-shadow: 
-    0 20px 40px rgba(69, 26, 3, 0.4),
-    0 0 0 1px rgba(251, 191, 36, 0.2);
+    0 20px 40px rgba(139, 69, 19, 0.2),
+    0 0 0 1px rgba(160, 82, 45, 0.3);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Autumn Theme - App Container */
+body[data-theme="autumn"] .app {
+  background: linear-gradient(145deg, 
+    #FFF8DC 0%, 
+    #F5DEB3 50%, 
+    #DEB887 100%
+  );
+  color: #8B4513;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Autumn Theme - Falling Leaves Animation */
+body[data-theme="autumn"] .app::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 10% 20%, rgba(255, 160, 122, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(240, 230, 140, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(222, 184, 135, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Ensure content is above the background */
+body[data-theme="autumn"] .app-header,
+body[data-theme="autumn"] .app-main {
+  position: relative;
+  z-index: 10;
+}
+
+/* Autumn leaf animation keyframes */
+@keyframes autumn-fall {
+  0% {
+    transform: translateY(-20px) rotate(0deg) translateX(0px);
+    opacity: 1;
+  }
+  25% {
+    transform: translateY(25vh) rotate(90deg) translateX(-10px);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(50vh) rotate(180deg) translateX(10px);
+    opacity: 0.6;
+  }
+  75% {
+    transform: translateY(75vh) rotate(270deg) translateX(-5px);
+    opacity: 0.4;
+  }
+  100% {
+    transform: translateY(100vh) rotate(360deg) translateX(0px);
+    opacity: 0;
+  }
+}
+
+@keyframes autumn-sway {
+  0%, 100% {
+    transform: translateX(0px) rotate(0deg);
+  }
+  33% {
+    transform: translateX(-15px) rotate(-5deg);
+  }
+  66% {
+    transform: translateX(15px) rotate(5deg);
+  }
+}
+
+/* Autumn leaves */
+.autumn-leaf {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #CD853F;
+  border-radius: 0 100% 0 100%;
+  opacity: 0.7;
+  animation: autumn-fall linear infinite, autumn-sway 3s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.autumn-leaf:nth-child(2n) {
+  background: #DAA520;
+  border-radius: 100% 0 100% 0;
+  animation-duration: 6s, 4s;
+  width: 10px;
+  height: 10px;
+}
+
+.autumn-leaf:nth-child(3n) {
+  background: #D2691E;
+  border-radius: 50% 0 50% 50%;
+  animation-duration: 4s, 5s;
+  width: 6px;
+  height: 6px;
+}
+
+.autumn-leaf:nth-child(4n) {
+  background: #B8860B;
+  border-radius: 0 50% 50% 50%;
+  animation-duration: 7s, 3s;
+  width: 9px;
+  height: 9px;
+}
+
+.autumn-leaf:nth-child(5n) {
+  background: #A0522D;
+  border-radius: 100% 0 0 0;
+  animation-duration: 5s, 6s;
+  width: 7px;
+  height: 7px;
 }
 
 /* Autumn Theme - Navigation */
 body[data-theme="autumn"] .tab-nav {
-  background: rgba(69, 26, 3, 0.6);
-  border-color: rgba(251, 191, 36, 0.3);
+  background: rgba(245, 222, 179, 0.8);
+  border-color: rgba(210, 105, 30, 0.3);
 }
 
 body[data-theme="autumn"] .tab-nav button {
-  color: #fde68a;
+  color: #8b4513;
   background: transparent;
-  border-color: rgba(251, 191, 36, 0.2);
+  border-color: rgba(210, 105, 30, 0.2);
 }
 
 body[data-theme="autumn"] .tab-nav button:hover {
-  background: rgba(251, 191, 36, 0.1);
-  color: #fef3c7;
+  background: rgba(210, 105, 30, 0.1);
+  color: #654321;
 }
 
 body[data-theme="autumn"] .tab-nav button.active {
-  background: linear-gradient(135deg, #dc2626, #ea580c);
-  color: #fef3c7;
-  border-color: rgba(251, 191, 36, 0.5);
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+  background: linear-gradient(135deg, #d2691e, #cd853f);
+  color: #fdf5e6;
+  border-color: rgba(210, 105, 30, 0.5);
+  box-shadow: 0 4px 12px rgba(210, 105, 30, 0.3);
+}
+
+/* Autumn Theme - Header Enhancement */
+body[data-theme="autumn"] .app-header {
+  background: linear-gradient(135deg, 
+    #8B4513 0%, 
+    #A0522D 50%, 
+    #CD853F 100%
+  );
+  color: #FFF8DC;
+  position: relative;
+}
+
+body[data-theme="autumn"] .app-header::before {
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(255, 248, 220, 0.1) 0%, transparent 60%),
+    radial-gradient(circle at 80% 70%, rgba(222, 184, 135, 0.1) 0%, transparent 50%);
+}
+
+body[data-theme="autumn"] .logo-section h1 {
+  color: #FFF8DC;
+  text-shadow: 0 2px 4px rgba(139, 69, 19, 0.5);
 }
 
 /* Autumn Theme - Section Headers */
 body[data-theme="autumn"] .notes-section h2,
 body[data-theme="autumn"] .themes-section h2,
 body[data-theme="autumn"] .settings-section h2 {
-  color: #fef3c7;
+  color: #8b4513;
 }
 
-/* Autumn Theme - Note Cards */
+/* Autumn Theme - Note Cards with Falling Leaves Background */
 body[data-theme="autumn"] .note-card {
-  background: rgba(120, 53, 15, 0.8);
-  border-color: rgba(251, 191, 36, 0.3);
-  color: #fde68a;
+  background: linear-gradient(145deg, 
+    rgba(255, 228, 196, 0.95) 0%, 
+    rgba(255, 218, 185, 0.9) 100%
+  );
+  border: 2px solid rgba(139, 69, 19, 0.4);
+  border-radius: 12px;
+  color: #8b4513;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 
+    0 4px 15px rgba(139, 69, 19, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* Add subtle leaf background pattern to note cards */
+body[data-theme="autumn"] .note-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 15% 25%, rgba(139, 69, 19, 0.06) 1px, transparent 1px),
+    radial-gradient(circle at 85% 75%, rgba(205, 133, 63, 0.04) 1px, transparent 1px),
+    radial-gradient(circle at 60% 40%, rgba(218, 165, 32, 0.05) 1px, transparent 1px);
+  background-size: 18px 18px, 22px 22px, 16px 16px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Ensure content is above the background pattern */
+body[data-theme="autumn"] .note-card > * {
+  position: relative;
+  z-index: 1;
 }
 
 body[data-theme="autumn"] .note-card:hover {
-  background: rgba(120, 53, 15, 0.9);
-  box-shadow: 0 8px 25px rgba(220, 38, 38, 0.2);
+  background: linear-gradient(145deg, 
+    rgba(255, 218, 185, 0.98) 0%, 
+    rgba(240, 230, 140, 0.95) 100%
+  );
+  box-shadow: 
+    0 8px 25px rgba(139, 69, 19, 0.25),
+    inset 0 2px 0 rgba(255, 255, 255, 0.4);
+  transform: translateY(-2px);
 }
 
 body[data-theme="autumn"] .note-date {
-  color: rgba(253, 230, 138, 0.7);
+  color: rgba(139, 69, 19, 0.7);
 }
 
 /* Autumn Theme - Buttons */
 body[data-theme="autumn"] .add-note-btn {
-  background: linear-gradient(135deg, #dc2626, #ea580c);
-  color: #fef3c7;
+  background: linear-gradient(135deg, #d2691e, #cd853f);
+  color: #fdf5e6;
 }
 
 body[data-theme="autumn"] .add-note-btn:hover {
-  background: linear-gradient(135deg, #b91c1c, #c2410c);
-  box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
+  background: linear-gradient(135deg, #b8860b, #daa520);
+  box-shadow: 0 6px 20px rgba(210, 105, 30, 0.3);
 }
 
 body[data-theme="autumn"] .theme-btn {
-  background: linear-gradient(135deg, #dc2626, #ea580c);
-  color: #fef3c7;
+  background: linear-gradient(135deg, #d2691e, #cd853f);
+  color: #fdf5e6;
 }
 
 body[data-theme="autumn"] .theme-btn:hover {
-  background: linear-gradient(135deg, #b91c1c, #c2410c);
+  background: linear-gradient(135deg, #b8860b, #daa520);
 }
 
 body[data-theme="autumn"] .theme-btn.active {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  color: #451a03;
+  background: linear-gradient(135deg, #daa520, #b8860b);
+  color: #8b4513;
 }
 
 /* Autumn Theme - Theme Cards */
 body[data-theme="autumn"] .theme-card {
-  background: rgba(120, 53, 15, 0.6);
-  border-color: rgba(251, 191, 36, 0.3);
-  color: #fde68a;
+  background: linear-gradient(145deg, 
+    rgba(255, 228, 196, 0.9) 0%, 
+    rgba(245, 222, 179, 0.85) 100%
+  );
+  border: 2px solid rgba(139, 69, 19, 0.4);
+  border-radius: 20px 15px 25px 10px;
+  color: #8b4513;
 }
 
 body[data-theme="autumn"] .theme-card:hover {
-  background: rgba(120, 53, 15, 0.8);
-  box-shadow: 0 8px 25px rgba(220, 38, 38, 0.2);
+  box-shadow: 
+    0 8px 25px rgba(139, 69, 19, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
 }
 
 body[data-theme="autumn"] .theme-card.active {
-  background: rgba(120, 53, 15, 1);
-  border-color: #dc2626;
-  box-shadow: 0 8px 25px rgba(220, 38, 38, 0.3);
+  background: linear-gradient(145deg, 
+    rgba(255, 218, 185, 0.95) 0%, 
+    rgba(222, 184, 135, 0.9) 100%
+  );
+  border-color: rgba(139, 69, 19, 0.6);
+  box-shadow: 
+    0 12px 35px rgba(139, 69, 19, 0.25),
+    inset 0 2px 0 rgba(255, 255, 255, 0.4);
 }
 
 body[data-theme="autumn"] .theme-info h3 {
-  color: #fef3c7;
+  color: #8b4513;
 }
 
 body[data-theme="autumn"] .theme-info p {
-  color: #fde68a;
+  color: rgba(139, 69, 19, 0.8);
+}
+
+/* Autumn Theme - Search Section */
+body[data-theme="autumn"] .search-section {
+  background: rgba(255, 228, 196, 0.4);
+  border-color: rgba(139, 69, 19, 0.2);
+}
+
+body[data-theme="autumn"] .search-input {
+  background: rgba(255, 248, 220, 0.9);
+  border-color: rgba(139, 69, 19, 0.3);
+  color: #8B4513;
+}
+
+body[data-theme="autumn"] .search-input:focus {
+  border-color: #CD853F;
+  box-shadow: 0 0 0 3px rgba(205, 133, 63, 0.2);
+  background: rgba(255, 248, 220, 1);
+}
+
+body[data-theme="autumn"] .category-btn {
+  background: rgba(245, 222, 179, 0.7);
+  border-color: rgba(139, 69, 19, 0.3);
+  color: #8B4513;
+}
+
+body[data-theme="autumn"] .category-btn:hover {
+  background: rgba(222, 184, 135, 0.8);
+  border-color: rgba(139, 69, 19, 0.5);
+}
+
+body[data-theme="autumn"] .category-btn.active {
+  background: linear-gradient(135deg, #CD853F, #D2691E);
+  color: #FFF8DC;
+  border-color: #8B4513;
+  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.3);
+}
+
+body[data-theme="autumn"] .btn-clear-search {
+  background: linear-gradient(135deg, #CD853F, #D2691E);
+  color: #FFF8DC;
 }
 
 /* Autumn Theme - Preview */
 .autumn-preview {
   background: linear-gradient(145deg, 
-    rgba(120, 53, 15, 0.8),
-    rgba(69, 26, 3, 0.8)
+    rgba(253, 245, 230, 0.9),
+    rgba(245, 222, 179, 0.9)
   );
 }
 
 .autumn-preview .preview-note:nth-child(1) {
-  background: rgba(245, 158, 11, 0.9);
-  color: #451a03;
+  background: rgba(255, 228, 196, 0.95) !important;
+  color: #8b4513;
+  border: 2px solid rgba(139, 69, 19, 0.3) !important;
+  border-radius: 8px !important;
+  position: relative;
+  overflow: hidden;
 }
 
 .autumn-preview .preview-note:nth-child(2) {
-  background: rgba(220, 38, 38, 0.9);
-  color: #fef3c7;
+  background: rgba(255, 228, 196, 0.95) !important;
+  color: #8b4513;
+  border: 2px solid rgba(139, 69, 19, 0.3) !important;
+  border-radius: 8px !important;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Add subtle leaf pattern to preview notes */
+.autumn-preview .preview-note::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(139, 69, 19, 0.08) 2px, transparent 2px),
+    radial-gradient(circle at 80% 70%, rgba(205, 133, 63, 0.06) 2px, transparent 2px);
+  background-size: 20px 20px, 15px 15px;
+  pointer-events: none;
 }
 
 /* Autumn Theme - Current Theme Badge */

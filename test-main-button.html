@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main Button Functionality Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status-box {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        
+        .test-step {
+            margin: 20px 0;
+            padding: 15px;
+            border-left: 4px solid #007bff;
+            background: #f8f9fa;
+        }
+        
+        .code-block {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔧 StickyNoteAI Main Button Fix - Testing Guide</h1>
+        
+        <div class="status-box success">
+            ✅ Extension Built Successfully - Ready for Testing
+        </div>
+        
+        <div class="status-box info">
+            📋 <strong>Issue Fixed:</strong> Main button for accessing options (new note, recent notes, settings) was buggy in autumn theme
+        </div>
+        
+        <div class="status-box warning">
+            🎯 <strong>Solution Applied:</strong> Main button now uses default styling while menu buttons maintain autumn theme
+        </div>
+
+        <h2>🧪 Manual Testing Steps</h2>
+        
+        <div class="test-step">
+            <h3>Step 1: Load Extension</h3>
+            <p>1. Open Chrome and go to <code>chrome://extensions/</code></p>
+            <p>2. Enable "Developer mode" in the top right</p>
+            <p>3. Click "Load unpacked" and select:</p>
+            <div class="code-block">/Users/arushbasliyal/Desktop/StickyNoteAI/.output/chrome-mv3</div>
+        </div>
+        
+        <div class="test-step">
+            <h3>Step 2: Test Default Theme</h3>
+            <p>1. Go to any website</p>
+            <p>2. Click the main sticky note widget button</p>
+            <p>3. ✅ Verify menu opens with "New Note", "Recent Notes", "Settings"</p>
+            <p>4. ✅ Test clicking each menu option works properly</p>
+        </div>
+        
+        <div class="test-step">
+            <h3>Step 3: Switch to Autumn Theme</h3>
+            <p>1. Click extension icon in toolbar → Settings → Themes tab</p>
+            <p>2. Select "Autumn" theme</p>
+            <p>3. ✅ Verify widget background changes to autumn colors</p>
+            <p>4. ✅ Verify falling leaves animation appears</p>
+        </div>
+        
+        <div class="test-step">
+            <h3>Step 4: Test Main Button in Autumn Theme</h3>
+            <p>1. Click the main widget button (should look default, not autumn-styled)</p>
+            <p>2. ✅ Verify menu opens smoothly without bugs</p>
+            <p>3. ✅ Verify menu buttons have autumn styling</p>
+            <p>4. ✅ Test all menu options work properly</p>
+            <p>5. ✅ Test button drag functionality</p>
+        </div>
+        
+        <div class="test-step">
+            <h3>Step 5: Test Note Creation</h3>
+            <p>1. Create new note in autumn theme</p>
+            <p>2. ✅ Verify note has single autumn background color</p>
+            <p>3. ✅ Verify falling leaves background animation</p>
+            <p>4. ✅ Test resizing, editing, saving functions</p>
+        </div>
+        
+        <div class="test-step">
+            <h3>Step 6: Theme Switching</h3>
+            <p>1. Switch back to "Default" theme</p>
+            <p>2. ✅ Verify all autumn styling is removed</p>
+            <p>3. ✅ Verify main button still works properly</p>
+            <p>4. Switch to autumn again and test</p>
+        </div>
+
+        <h2>🔍 What Was Fixed</h2>
+        
+        <div class="code-block">
+// Before: All buttons got autumn styling (caused bugs)
+const buttons = widget.querySelectorAll('button');
+
+// After: Only menu buttons get styling, main button stays default
+const menuButtons = widget.querySelectorAll('.menu-button');
+const mainButton = widget.querySelector('.widget-main-button');
+// Main button explicitly kept with default styling
+        </div>
+
+        <h2>✨ Expected Results</h2>
+        <ul>
+            <li><strong>Main Button:</strong> Always looks default (reliable functionality)</li>
+            <li><strong>Menu Buttons:</strong> Get autumn styling in autumn theme</li>
+            <li><strong>Widget Background:</strong> Autumn colors with falling leaves</li>
+            <li><strong>Notes:</strong> Single autumn color background with falling leaves</li>
+            <li><strong>No Bugs:</strong> Smooth clicking, dragging, menu operations</li>
+        </ul>
+        
+        <div class="status-box success">
+            🎉 <strong>Fix Complete:</strong> Main button functionality preserved while maintaining autumn theme aesthetics
+        </div>
+    </div>
+</body>
+</html>

@@ -27,19 +27,19 @@ const themes: Theme[] = [
   {
     id: 'autumn',
     name: 'Autumn',
-    description: 'Warm autumn colors with orange, red, and golden tones',
+    description: 'Professional autumn theme with elegant leaf aesthetics',
     colors: {
-      primary: 'linear-gradient(135deg, #ff6b35 0%, #d84315 100%)',
-      secondary: 'linear-gradient(135deg, #ff8f00 0%, #ef6c00 100%)',
-      accent: '#8d4004',
-      background: 'linear-gradient(145deg, #fff3e0, #ffe0b2)',
+      primary: 'linear-gradient(135deg, #8B4513 0%, #A0522D 100%)',
+      secondary: 'linear-gradient(135deg, #CD853F 0%, #DAA520 100%)',
+      accent: '#228B22',
+      background: 'linear-gradient(145deg, #FFF8DC, #F5DEB3)',
       noteColors: [
-        'rgba(255, 183, 77, 0.85)',  // Golden yellow
-        'rgba(255, 138, 101, 0.85)', // Coral orange
-        'rgba(198, 40, 40, 0.85)',   // Deep red
-        'rgba(191, 54, 12, 0.85)',   // Burnt orange
-        'rgba(239, 108, 0, 0.85)',   // Orange
-        'rgba(130, 119, 23, 0.85)',  // Golden brown
+        'rgba(255, 228, 196, 0.95)', // Single bisque color for all notes
+        'rgba(255, 228, 196, 0.95)', // Same color repeated for consistency
+        'rgba(255, 228, 196, 0.95)', // Same color repeated for consistency
+        'rgba(255, 228, 196, 0.95)', // Same color repeated for consistency
+        'rgba(255, 228, 196, 0.95)', // Same color repeated for consistency
+        'rgba(255, 228, 196, 0.95)', // Same color repeated for consistency
       ]
     }
   }
@@ -50,6 +50,8 @@ function App() {
   const [stealthMode, setStealthMode] = useState(false);
   const [activeTab, setActiveTab] = useState<"notes" | "themes" | "settings">("notes");
   const [activeTheme, setActiveTheme] = useState<string>('default');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   useEffect(() => {
     // Load notes from storage
@@ -75,6 +77,42 @@ function App() {
       browser.storage.onChanged.removeListener(handleStorageChange);
     };
   }, []);
+
+  // Autumn theme falling leaves effect
+  useEffect(() => {
+    if (activeTheme === 'autumn') {
+      const createLeaf = () => {
+        const leaf = document.createElement('div');
+        leaf.className = 'autumn-leaf';
+        leaf.style.left = Math.random() * 100 + '%';
+        leaf.style.animationDelay = Math.random() * 2 + 's';
+        leaf.style.animationDuration = (4 + Math.random() * 4) + 's, ' + (3 + Math.random() * 3) + 's';
+        
+        document.querySelector('.app')?.appendChild(leaf);
+        
+        // Remove leaf after animation
+        setTimeout(() => {
+          if (leaf.parentNode) {
+            leaf.remove();
+          }
+        }, 8000);
+      };
+
+      // Create initial leaves
+      for (let i = 0; i < 8; i++) {
+        setTimeout(() => createLeaf(), i * 200);
+      }
+
+      // Create leaves periodically
+      const leafInterval = setInterval(createLeaf, 800);
+
+      return () => {
+        clearInterval(leafInterval);
+        // Clean up existing leaves
+        document.querySelectorAll('.autumn-leaf').forEach(leaf => leaf.remove());
+      };
+    }
+  }, [activeTheme]);
 
   const loadNotes = async () => {
     try {
@@ -118,6 +156,46 @@ function App() {
     setNotes(updatedNotes);
     browser.storage.local.set({ "sticky-notes": updatedNotes });
   };
+
+  // Simple AI-based category detection
+  const detectCategory = (text: string): string => {
+    const content = text.toLowerCase();
+    
+    // Study-related keywords
+    if (content.includes('exam') || content.includes('study') || content.includes('homework') || 
+        content.includes('assignment') || content.includes('test') || content.includes('quiz') ||
+        content.includes('lecture') || content.includes('chapter') || content.includes('research')) {
+      return 'study';
+    }
+    
+    // Task-related keywords
+    if (content.includes('todo') || content.includes('task') || content.includes('deadline') ||
+        content.includes('meeting') || content.includes('call') || content.includes('buy') ||
+        content.includes('pay') || content.includes('finish') || content.includes('complete')) {
+      return 'tasks';
+    }
+    
+    // Ideas-related keywords
+    if (content.includes('idea') || content.includes('think') || content.includes('maybe') ||
+        content.includes('concept') || content.includes('brainstorm') || content.includes('inspiration') ||
+        content.includes('creative') || content.includes('project')) {
+      return 'ideas';
+    }
+    
+    return 'general';
+  };
+
+  // Filter notes based on search and category
+  const filteredNotes = notes.filter(note => {
+    const matchesSearch = searchQuery === '' || 
+      note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      note.content.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const noteCategory = detectCategory(note.content + ' ' + note.title);
+    const matchesCategory = selectedCategory === 'all' || noteCategory === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
+  });
 
   const exportNotes = () => {
     const dataStr = JSON.stringify(notes, null, 2);
@@ -193,10 +271,56 @@ function App() {
         {activeTab === "notes" && (
           <div className="notes-section">
             <div className="section-header">
-              <h2>Your Notes ({notes.length})</h2>
+              <h2>Your Notes ({filteredNotes.length}/{notes.length})</h2>
               <button className="btn-export" onClick={exportNotes}>
                 📤 Export
               </button>
+            </div>
+
+            {/* Search and Filter Section */}
+            <div className="search-section">
+              <div className="search-bar">
+                <input
+                  type="text"
+                  placeholder="🔍 Search your notes..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="search-input"
+                />
+              </div>
+              
+              <div className="category-filters">
+                <button 
+                  className={`category-btn ${selectedCategory === 'all' ? 'active' : ''}`}
+                  onClick={() => setSelectedCategory('all')}
+                >
+                  📝 All
+                </button>
+                <button 
+                  className={`category-btn ${selectedCategory === 'study' ? 'active' : ''}`}
+                  onClick={() => setSelectedCategory('study')}
+                >
+                  📚 Study
+                </button>
+                <button 
+                  className={`category-btn ${selectedCategory === 'tasks' ? 'active' : ''}`}
+                  onClick={() => setSelectedCategory('tasks')}
+                >
+                  ✅ Tasks
+                </button>
+                <button 
+                  className={`category-btn ${selectedCategory === 'ideas' ? 'active' : ''}`}
+                  onClick={() => setSelectedCategory('ideas')}
+                >
+                  💡 Ideas
+                </button>
+                <button 
+                  className={`category-btn ${selectedCategory === 'general' ? 'active' : ''}`}
+                  onClick={() => setSelectedCategory('general')}
+                >
+                  📋 General
+                </button>
+              </div>
             </div>
 
             <div className="quick-actions">
@@ -223,20 +347,45 @@ function App() {
                   </ul>
                 </div>
               </div>
+            ) : filteredNotes.length === 0 ? (
+              <div className="empty-state">
+                <p>No notes match your search criteria.</p>
+                <button className="btn-clear-search" onClick={() => {
+                  setSearchQuery('');
+                  setSelectedCategory('all');
+                }}>
+                  Clear filters
+                </button>
+              </div>
             ) : (
               <div className="notes-list">
-                {notes.map((note) => (
-                  <div key={note.id} className="note-card">
-                    <div className="note-header">
-                      <h3>{note.title}</h3>
-                      <button className="btn-delete" onClick={() => deleteNote(note.id)} title="Delete note">
-                        🗑️
-                      </button>
+                {filteredNotes.map((note) => {
+                  const category = detectCategory(note.content + ' ' + note.title);
+                  const categoryEmoji: { [key: string]: string } = {
+                    study: '📚',
+                    tasks: '✅', 
+                    ideas: '💡',
+                    general: '📋'
+                  };
+                  
+                  return (
+                    <div key={note.id} className="note-card">
+                      <div className="note-header">
+                        <div className="note-title-section">
+                          <h3>{note.title}</h3>
+                          <span className={`category-badge category-${category}`}>
+                            {categoryEmoji[category]} {category}
+                          </span>
+                        </div>
+                        <button className="btn-delete" onClick={() => deleteNote(note.id)} title="Delete note">
+                          🗑️
+                        </button>
+                      </div>
+                      <p className="note-content">{note.content}</p>
+                      <div className="note-meta">Created: {new Date(note.createdAt).toLocaleDateString()}</div>
                     </div>
-                    <p className="note-content">{note.content}</p>
-                    <div className="note-meta">Created: {new Date(note.createdAt).toLocaleDateString()}</div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

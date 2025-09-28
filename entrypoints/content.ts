@@ -43,19 +43,19 @@ async function loadCurrentTheme() {
         {
           id: 'autumn',
           name: 'Autumn',
-          description: 'Warm autumn colors with orange, red, and golden tones',
+          description: 'Professional autumn theme with elegant leaf aesthetics',
           colors: {
-            primary: 'linear-gradient(135deg, #ff6b35 0%, #d84315 100%)',
-            secondary: 'linear-gradient(135deg, #ff8f00 0%, #ef6c00 100%)',
-            accent: '#8d4004',
-            background: 'linear-gradient(145deg, #fff3e0, #ffe0b2)',
+            primary: 'linear-gradient(135deg, #8B4513 0%, #A0522D 100%)',
+            secondary: 'linear-gradient(135deg, #CD853F 0%, #DAA520 100%)',
+            accent: '#228B22',
+            background: 'linear-gradient(145deg, #FFF8DC, #F5DEB3)',
             noteColors: [
-              'rgba(255, 183, 77, 0.85)',  // Golden yellow
-              'rgba(255, 138, 101, 0.85)', // Coral orange
-              'rgba(198, 40, 40, 0.85)',   // Deep red
-              'rgba(191, 54, 12, 0.85)',   // Burnt orange
-              'rgba(239, 108, 0, 0.85)',   // Orange
-              'rgba(130, 119, 23, 0.85)',  // Golden brown
+              'rgba(255, 160, 122, 0.95)', // Light salmon (autumn leaf)
+              'rgba(255, 218, 185, 0.95)', // Peach puff
+              'rgba(240, 230, 140, 0.95)', // Khaki (golden leaf)  
+              'rgba(222, 184, 135, 0.95)', // Burlywood
+              'rgba(255, 228, 181, 0.95)', // Moccasin
+              'rgba(255, 239, 213, 0.95)', // Papaya whip
             ]
           }
         }
@@ -65,6 +65,9 @@ async function loadCurrentTheme() {
       if (theme) {
         currentTheme = { id: settings.activeTheme, data: theme };
         console.log("StickyNoteAI: Loaded theme:", settings.activeTheme);
+        
+        // Apply autumn theme to existing widget and panels
+        setTimeout(() => applyThemeToWidgetAndPanels(settings.activeTheme), 100);
       }
     }
   } catch (error) {
@@ -546,11 +549,22 @@ function createFloatingWidget() {
       font-family: 'Segoe UI', system-ui, sans-serif;
       transform: scale(0.9) rotate(var(--note-rotation, -1deg));
       opacity: var(--note-opacity, 0);
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: 
+        transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 0.3s ease-out,
+        background 0.2s ease-out,
+        box-shadow 0.2s ease-out,
+        border-radius 0.2s ease-out;
       border: 2px solid rgba(0, 0, 0, 0.1);
       backdrop-filter: blur(2px);
       display: flex;
       flex-direction: column;
+      resize: both;
+      overflow: hidden;
+      min-width: 200px;
+      min-height: 120px;
+      max-width: 600px;
+      max-height: 500px;
     }
 
     .sticky-note.open {
@@ -845,11 +859,11 @@ function createFloatingWidget() {
 
     /* Action Buttons - Uniform Circular Design */
     .action-btn {
-      width: 28px;
-      height: 28px;
+      width: 24px;
+      height: 24px;
       border: 1px solid rgba(0, 0, 0, 0.2);
       border-radius: 50%;
-      font-size: 12px;
+      font-size: 10px;
       cursor: pointer;
       transition: all 0.2s ease;
       display: flex;
@@ -886,6 +900,22 @@ function createFloatingWidget() {
       color: rgba(0, 0, 0, 0.9);
     }
 
+    .toolbar-toggle-btn {
+      position: relative;
+      font-weight: bold;
+    }
+
+    .note-toolbar.collapsed .transparency-control,
+    .note-toolbar.collapsed .font-size-control,
+    .note-toolbar.collapsed .lock-btn,
+    .note-toolbar.collapsed .delete-btn {
+      display: none;
+    }
+
+    .note-toolbar.collapsed .toolbar-toggle-btn::after {
+      content: '›';
+    }
+
     /* Note Controls Bottom - Left Aligned */
     .note-controls-bottom {
       display: flex;
@@ -918,7 +948,9 @@ function createFloatingWidget() {
     .note-toolbar {
       display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: flex-start;
+      gap: 6px;
+      padding: 0;
     }
 
     /* Transparency Control */
@@ -929,9 +961,9 @@ function createFloatingWidget() {
     }
 
     .tool-icon {
-      width: 28px;
-      height: 28px;
-      font-size: 12px;
+      width: 24px;
+      height: 24px;
+      font-size: 10px;
       color: rgba(0, 0, 0, 0.8);
       cursor: pointer;
       transition: all 0.2s ease;
@@ -1061,6 +1093,72 @@ function createFloatingWidget() {
 
 
 
+    /* Autumn Theme - Falling Leaves Animation */
+    @keyframes fall {
+      0% {
+        transform: translateY(-100vh) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+      }
+    }
+
+    @keyframes sway {
+      0%, 100% {
+        transform: translateX(0px);
+      }
+      50% {
+        transform: translateX(30px);
+      }
+    }
+
+    .falling-leaf {
+      position: fixed;
+      width: 20px;
+      height: 20px;
+      background: linear-gradient(45deg, #FF6347, #FFD700, #8B4513);
+      border-radius: 0 100% 0 100%;
+      animation: fall 8s linear infinite, sway 3s ease-in-out infinite;
+      z-index: 1000;
+      pointer-events: none;
+    }
+
+    .falling-leaf:nth-child(2n) {
+      animation-duration: 10s, 4s;
+      background: linear-gradient(45deg, #CD853F, #DEB887, #D2691E);
+    }
+
+    .falling-leaf:nth-child(3n) {
+      animation-duration: 12s, 5s;
+      background: linear-gradient(45deg, #DAA520, #F0E68C, #B8860B);
+      border-radius: 100% 0 100% 0;
+    }
+
+    .falling-leaf:nth-child(4n) {
+      animation-duration: 9s, 3.5s;
+      background: linear-gradient(45deg, #FF8C00, #FFA500, #FF4500);
+    }
+
+    .falling-leaf:nth-child(5n) {
+      animation-duration: 11s, 4.5s;
+      background: linear-gradient(45deg, #A0522D, #8B4513, #654321);
+      border-radius: 50% 0 50% 50%;
+    }
+
+    /* Autumn leaf container for main extension area */
+    .autumn-leaves-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 999;
+      overflow: hidden;
+    }
+
     /* ...existing code... */
   `;
   document.head.appendChild(style);
@@ -1091,6 +1189,11 @@ function createFloatingWidget() {
   }
 
   setupWidgetEvents();
+  
+  // Apply current theme to the widget
+  setTimeout(() => {
+    applyThemeToWidgetAndPanels(currentTheme.id);
+  }, 100);
 }
 
 function setupWidgetEvents() {
@@ -1220,7 +1323,7 @@ function setupWidgetEvents() {
       const mouseX = e.clientX;
       const mouseY = e.clientY;
       
-      const tolerance = Math.max(rect.width, rect.height) * 0.5;
+      const tolerance = 24; // Reduced by 60% from previous distance
       
       // Only close if mouse is far from menu area
       const isFarFromMenu = mouseX < rect.left - tolerance || 
@@ -1245,10 +1348,10 @@ function setupWidgetEvents() {
       const mouseX = e.clientX;
       const mouseY = e.clientY;
 
-      // Calculate 50% larger tolerance area
-      const tolerance = Math.max(rect.width, rect.height) * 0.5;
+      // Calculate smaller tolerance area (reduced by 60%)
+      const tolerance = 24;
       
-      // If mouse is within menu bounds or large tolerance area, don't close
+      // If mouse is within menu bounds or tolerance area, don't close
       const isNearMenu = mouseX >= rect.left - tolerance && 
                         mouseX <= rect.right + tolerance && 
                         mouseY >= rect.top - tolerance && 
@@ -1592,6 +1695,395 @@ function handleMenuAction(action: string) {
   }, 100);
 }
 
+// Falling leaves animation functions
+function createNoteLeavesBackground(noteElement: HTMLElement) {
+  console.log('Creating note leaves background, current theme:', currentTheme.id);
+  if (currentTheme.id !== 'autumn') return;
+  
+  // Create falling leaves background container
+  const leavesBackground = document.createElement('div');
+  leavesBackground.className = 'note-leaves-background';
+  leavesBackground.style.cssText = `
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  `;
+  
+  // Add CSS for note leaves animation if not already added
+  if (!document.getElementById('note-leaves-animation')) {
+    const noteLeafCSS = `
+      <style id="note-leaves-animation">
+        .note-falling-leaf {
+          position: absolute;
+          width: 4px;
+          height: 4px;
+          opacity: 0.12;
+          border-radius: 0 100% 0 100%;
+          pointer-events: none;
+          animation: note-leaf-fall linear infinite;
+        }
+        
+        .note-falling-leaf:nth-child(2n) {
+          border-radius: 100% 0 100% 0;
+          animation-duration: 8s;
+          opacity: 0.08;
+        }
+        
+        .note-falling-leaf:nth-child(3n) {
+          border-radius: 50% 0 50% 50%;
+          animation-duration: 6s;
+          opacity: 0.1;
+        }
+        
+        .note-falling-leaf:nth-child(4n) {
+          border-radius: 0 50% 50% 50%;
+          animation-duration: 10s;
+          opacity: 0.06;
+        }
+        
+        @keyframes note-leaf-fall {
+          0% {
+            transform: translateY(-10px) rotate(0deg) translateX(0px);
+            opacity: 0;
+          }
+          10% {
+            opacity: 0.12;
+          }
+          90% {
+            opacity: 0.02;
+          }
+          100% {
+            transform: translateY(200px) rotate(360deg) translateX(15px);
+            opacity: 0;
+          }
+        }
+      </style>
+    `;
+    document.head.insertAdjacentHTML('beforeend', noteLeafCSS);
+  }
+  
+  // Create individual leaves for the background
+  function createNoteLeaf() {
+    if (!document.body.contains(noteElement)) return;
+    
+    const leaf = document.createElement('div');
+    leaf.className = 'note-falling-leaf';
+    
+    // Autumn colors
+    const colors = ['#CD853F', '#DAA520', '#D2691E', '#B8860B', '#A0522D'];
+    leaf.style.background = colors[Math.floor(Math.random() * colors.length)];
+    
+    // Random position and timing
+    leaf.style.left = Math.random() * 100 + '%';
+    leaf.style.animationDelay = Math.random() * 5 + 's';
+    leaf.style.animationDuration = (6 + Math.random() * 4) + 's';
+    
+    leavesBackground.appendChild(leaf);
+    
+    // Remove after animation
+    setTimeout(() => {
+      if (leaf.parentNode) {
+        leaf.remove();
+      }
+    }, 12000);
+  }
+  
+  // Create initial leaves
+  for (let i = 0; i < 6; i++) {
+    setTimeout(() => createNoteLeaf(), i * 300);
+  }
+  
+  // Add periodic leaves
+  const noteLeafInterval = setInterval(() => {
+    if (document.body.contains(noteElement)) {
+      createNoteLeaf();
+    } else {
+      clearInterval(noteLeafInterval);
+    }
+  }, 2000);
+  
+  noteElement.appendChild(leavesBackground);
+  noteElement.style.position = 'relative';
+  noteElement.style.overflow = 'hidden';
+}
+
+// Add falling leaves to main extension area and recent notes panel
+function createAreaLeavesBackground(containerElement: HTMLElement, areaType: 'widget' | 'panel' = 'widget') {
+  console.log('Creating area leaves background, current theme:', currentTheme.id, 'for:', areaType);
+  if (currentTheme.id !== 'autumn') return;
+  
+  // Remove existing leaves container
+  const existing = containerElement.querySelector('.area-leaves-background');
+  if (existing) existing.remove();
+  
+  const leavesContainer = document.createElement('div');
+  leavesContainer.className = 'area-leaves-background';
+  leavesContainer.style.cssText = `
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+    overflow: hidden;
+  `;
+  
+  // Add CSS for area leaves if not already added
+  if (!document.getElementById('area-leaves-animation')) {
+    const areaLeafCSS = `
+      <style id="area-leaves-animation">
+        .area-falling-leaf {
+          position: absolute;
+          width: 3px;
+          height: 3px;
+          opacity: 0.15;
+          border-radius: 0 100% 0 100%;
+          pointer-events: none;
+          animation: area-leaf-fall linear infinite;
+        }
+        
+        .area-falling-leaf:nth-child(2n) {
+          border-radius: 100% 0 100% 0;
+          animation-duration: 10s;
+          opacity: 0.1;
+        }
+        
+        .area-falling-leaf:nth-child(3n) {
+          border-radius: 50% 0 50% 50%;
+          animation-duration: 8s;
+          opacity: 0.12;
+        }
+        
+        .area-falling-leaf:nth-child(4n) {
+          border-radius: 0 50% 50% 50%;
+          animation-duration: 12s;
+          opacity: 0.08;
+        }
+        
+        @keyframes area-leaf-fall {
+          0% {
+            transform: translateY(-20px) rotate(0deg) translateX(0px);
+            opacity: 0;
+          }
+          10% {
+            opacity: 0.15;
+          }
+          90% {
+            opacity: 0.03;
+          }
+          100% {
+            transform: translateY(150px) rotate(360deg) translateX(10px);
+            opacity: 0;
+          }
+        }
+      </style>
+    `;
+    document.head.insertAdjacentHTML('beforeend', areaLeafCSS);
+  }
+  
+  function createAreaLeaf() {
+    if (!document.body.contains(containerElement)) return;
+    
+    const leaf = document.createElement('div');
+    leaf.className = 'area-falling-leaf';
+    
+    // Autumn colors
+    const colors = ['#CD853F', '#DAA520', '#D2691E', '#B8860B', '#A0522D'];
+    leaf.style.background = colors[Math.floor(Math.random() * colors.length)];
+    
+    // Random position and timing
+    leaf.style.left = Math.random() * 100 + '%';
+    leaf.style.animationDelay = Math.random() * 3 + 's';
+    leaf.style.animationDuration = (8 + Math.random() * 4) + 's';
+    
+    leavesContainer.appendChild(leaf);
+    
+    // Remove after animation
+    setTimeout(() => {
+      if (leaf.parentNode) {
+        leaf.remove();
+      }
+    }, 15000);
+  }
+  
+  // Create initial leaves
+  const leafCount = areaType === 'widget' ? 3 : 5;
+  for (let i = 0; i < leafCount; i++) {
+    setTimeout(() => createAreaLeaf(), i * 500);
+  }
+  
+  // Add periodic leaves
+  const areaLeafInterval = setInterval(() => {
+    if (document.body.contains(containerElement)) {
+      createAreaLeaf();
+    } else {
+      clearInterval(areaLeafInterval);
+    }
+  }, 3000);
+  
+  containerElement.appendChild(leavesContainer);
+  containerElement.style.position = 'relative';
+  containerElement.style.overflow = 'hidden';
+}
+
+// Apply theme to widget and panels
+function applyThemeToWidgetAndPanels(themeId: string) {
+  const widget = document.getElementById('sticky-note-widget');
+  const notesPanel = document.querySelector('.notes-panel') as HTMLElement;
+  
+  if (themeId === 'autumn') {
+    // CRITICAL: Never touch the widget container or main button - only style menu when it's open
+    if (widget) {
+      // Absolutely NO styling on widget container
+      widget.style.removeProperty('background');
+      widget.style.removeProperty('border'); 
+      widget.style.removeProperty('color');
+      
+      // Absolutely NO styling on main button - let it stay completely default
+      const mainButton = widget.querySelector('.widget-main-button');
+      if (mainButton) {
+        const mainBtnElement = mainButton as HTMLElement;
+        // Remove any potential theme styling, don't add any
+        mainBtnElement.style.removeProperty('background');
+        mainBtnElement.style.removeProperty('border');
+        mainBtnElement.style.removeProperty('color');
+        mainBtnElement.style.removeProperty('box-shadow');
+      }
+      
+      // Only style the menu when it's visible/open
+      const widgetMenu = widget.querySelector('.widget-menu');
+      if (widgetMenu) {
+        const menuElement = widgetMenu as HTMLElement;
+        // Only apply autumn styling to menu
+        menuElement.style.background = 'linear-gradient(145deg, rgba(255, 248, 220, 0.95), rgba(245, 222, 179, 0.9))';
+        menuElement.style.border = '2px solid rgba(139, 69, 19, 0.4)';
+        menuElement.style.color = '#8B4513';
+        menuElement.style.borderRadius = '12px';
+        menuElement.style.padding = '8px';
+        menuElement.style.boxShadow = '0 4px 12px rgba(139, 69, 19, 0.15)';
+        
+        // Add falling leaves to menu only
+        createAreaLeavesBackground(menuElement, 'widget');
+      }
+      
+      // Style individual menu buttons
+      const menuButtons = widget.querySelectorAll('.menu-button');
+      menuButtons.forEach(button => {
+        const btnElement = button as HTMLElement;
+        btnElement.style.color = '#8B4513';
+        btnElement.style.background = 'rgba(222, 184, 135, 0.6)';
+        btnElement.style.border = '1px solid rgba(139, 69, 19, 0.4)';
+        btnElement.style.borderRadius = '6px';
+        btnElement.style.padding = '8px 12px';
+        btnElement.style.margin = '2px';
+      });
+    }
+    
+    // Add autumn theme to recent notes panel
+    if (notesPanel) {
+      notesPanel.style.background = 'linear-gradient(145deg, rgba(255, 248, 220, 0.95), rgba(245, 222, 179, 0.9))';
+      notesPanel.style.border = '2px solid rgba(139, 69, 19, 0.4)';
+      notesPanel.style.color = '#8B4513';
+      createAreaLeavesBackground(notesPanel, 'panel');
+      
+      // Update panel content styling
+      const panelTitle = notesPanel.querySelector('h3');
+      if (panelTitle) {
+        (panelTitle as HTMLElement).style.color = '#8B4513';
+      }
+      
+      const noteItems = notesPanel.querySelectorAll('.recent-note-item');
+      noteItems.forEach(item => {
+        const itemElement = item as HTMLElement;
+        itemElement.style.background = 'rgba(255, 228, 196, 0.8)';
+        itemElement.style.border = '1px solid rgba(139, 69, 19, 0.3)';
+        itemElement.style.color = '#8B4513';
+        itemElement.style.position = 'relative';
+        itemElement.style.zIndex = '2';
+      });
+    }
+  } else {
+    // Reset to default theme
+    if (widget) {
+      // Ensure widget container has no styling
+      widget.style.removeProperty('background');
+      widget.style.removeProperty('border'); 
+      widget.style.removeProperty('color');
+      
+      // Reset menu container styling
+      const widgetMenu = widget.querySelector('.widget-menu');
+      if (widgetMenu) {
+        const menuElement = widgetMenu as HTMLElement;
+        menuElement.style.removeProperty('background');
+        menuElement.style.removeProperty('border');
+        menuElement.style.removeProperty('color');
+        menuElement.style.removeProperty('border-radius');
+        menuElement.style.removeProperty('padding');
+        menuElement.style.removeProperty('box-shadow');
+        
+        // Remove leaves from menu
+        const leavesBackground = menuElement.querySelector('.area-leaves-background');
+        if (leavesBackground) leavesBackground.remove();
+      }
+      
+      // Reset menu button styling
+      const menuButtons = widget.querySelectorAll('.menu-button');
+      menuButtons.forEach(button => {
+        const btnElement = button as HTMLElement;
+        btnElement.style.removeProperty('color');
+        btnElement.style.removeProperty('background');
+        btnElement.style.removeProperty('border');
+        btnElement.style.removeProperty('border-radius');
+        btnElement.style.removeProperty('padding');
+        btnElement.style.removeProperty('margin');
+      });
+      
+      // Ensure main button has no custom styling (let CSS handle it)
+      const mainButton = widget.querySelector('.widget-main-button');
+      if (mainButton) {
+        const mainBtnElement = mainButton as HTMLElement;
+        // Remove all inline styles to let CSS handle it
+        mainBtnElement.style.removeProperty('background');
+        mainBtnElement.style.removeProperty('border');
+        mainBtnElement.style.removeProperty('color');
+        mainBtnElement.style.removeProperty('box-shadow');
+        mainBtnElement.style.removeProperty('position');
+      }
+    }
+    
+    if (notesPanel) {
+      notesPanel.style.removeProperty('background');
+      notesPanel.style.removeProperty('border');
+      notesPanel.style.removeProperty('color');
+      // Remove leaves
+      const leavesBackground = notesPanel.querySelector('.area-leaves-background');
+      if (leavesBackground) leavesBackground.remove();
+      
+      // Reset panel content styling
+      const panelTitle = notesPanel.querySelector('h3');
+      if (panelTitle) {
+        (panelTitle as HTMLElement).style.removeProperty('color');
+      }
+      
+      const noteItems = notesPanel.querySelectorAll('.recent-note-item');
+      noteItems.forEach(item => {
+        const itemElement = item as HTMLElement;
+        itemElement.style.removeProperty('background');
+        itemElement.style.removeProperty('border');
+        itemElement.style.removeProperty('color');
+        itemElement.style.removeProperty('position');
+        itemElement.style.removeProperty('z-index');
+      });
+    }
+  }
+}
+
 function createNoteEditor(initialText: string = "") {
   // Check if we have an active session - if so, highlight it instead of creating new
   if (currentNoteSession && currentNoteSession.element && document.body.contains(currentNoteSession.element)) {
@@ -1600,6 +2092,11 @@ function createNoteEditor(initialText: string = "") {
   }
 
   const stickyNote = createStickyNote(initialText);
+  
+  if (!stickyNote) {
+    console.log("StickyNoteAI: Cannot create note - maximum limit reached");
+    return;
+  }
   
   // Auto-focus the textarea when created via shortcut
   setTimeout(() => {
@@ -1613,6 +2110,8 @@ function createNoteEditor(initialText: string = "") {
 
 // Global note management
 let currentNoteSession: any = null;
+let activeNewNotesCount = 0;
+const MAX_NEW_NOTES = 10;
 let openNotesList: Map<string, HTMLElement> = new Map(); // Track open notes by ID
 
 function createStickyNote(content: string = "", existingNoteData: any = null) {
@@ -1628,11 +2127,10 @@ function createStickyNote(content: string = "", existingNoteData: any = null) {
     }
   }
 
-  // Check if we should reuse existing note session for new notes
-  if (currentNoteSession && !existingNoteData) {
-    // Highlight and focus existing note
-    highlightExistingNote(currentNoteSession.element);
-    return currentNoteSession.element;
+  // Check if we've reached the maximum number of new notes
+  if (!existingNoteData && activeNewNotesCount >= MAX_NEW_NOTES) {
+    console.log("StickyNoteAI: Maximum new notes limit reached (10)");
+    return null;
   }
 
   const noteId = existingNoteData?.id || Date.now().toString();
@@ -1651,25 +2149,15 @@ function createStickyNote(content: string = "", existingNoteData: any = null) {
     position = existingNoteData.position;
     size = existingNoteData.size;
   } else {
-    // Use theme colors if available, otherwise default colors
-    let stickyColors;
-    
-    if (currentTheme.id === 'autumn' && currentTheme.data?.colors?.noteColors) {
-      stickyColors = currentTheme.data.colors.noteColors;
+    // Use single color based on theme
+    if (currentTheme.id === 'autumn') {
+      // Single autumn color for all notes (like default yellow)
+      noteColor = 'rgba(255, 228, 196, 0.95)'; // Bisque - single warm autumn color
     } else {
-      // Default realistic sticky note colors
-      stickyColors = [
-        'rgba(255, 251, 147, 0.95)', // Classic yellow
-        'rgba(255, 237, 213, 0.95)', // Light peach
-        'rgba(237, 255, 235, 0.95)', // Light green
-        'rgba(235, 245, 255, 0.95)', // Light blue
-        'rgba(255, 235, 255, 0.95)', // Light pink
-        'rgba(255, 243, 205, 0.95)', // Light orange
-        'rgba(243, 235, 255, 0.95)', // Light purple
-      ];
+      // Default single yellow color
+      noteColor = 'rgba(255, 251, 147, 0.95)'; // Classic yellow
     }
     
-    noteColor = stickyColors[Math.floor(Math.random() * stickyColors.length)];
     noteTitle = content ? (content.length > 15 ? content.substring(0, 15) + "..." : content) : "New Note";
     fontSize = 13;
     transparency = 0.95;
@@ -1679,29 +2167,30 @@ function createStickyNote(content: string = "", existingNoteData: any = null) {
   
   note.innerHTML = `
     <div class="sticky-note-header">
-      <span class="note-title" title="Click to edit title">${noteTitle}</span>
+      <span class="note-title" contenteditable="true" title="Click to edit title (max 20 chars)" maxlength="20">${noteTitle}</span>
       <div class="note-controls">
         <button class="note-control-btn pin-btn" title="Pin note (always on top)">📌</button>
         <button class="note-control-btn minimize-btn" title="Minimize">−</button>
         <button class="note-control-btn close-btn" title="Close">×</button>
       </div>
     </div>
-    <textarea class="sticky-note-textarea" placeholder="Write your note here..." style="font-size: ${fontSize}px;">${content}</textarea>
+    <textarea class="sticky-note-textarea" placeholder="Write your note here..." style="font-size: ${fontSize}px; outline: none; border: none;">${content}</textarea>
     <div class="note-controls-bottom">
       <div class="note-toolbar">
-        <button class="action-btn toolbar-toggle-btn" title="Hide toolbar">&lt;</button>
+        <button class="action-btn toolbar-toggle-btn" title="Hide toolbar">‹</button>
         <div class="transparency-control">
           <input type="range" class="transparency-slider" min="0.3" max="1" step="0.1" value="${transparency}">
         </div>
         <div class="font-size-control">
-          <span class="tool-icon font-size-toggle">Aa</span>
+          <button class="tool-icon font-size-toggle" title="Font size">Aa</button>
           <div class="font-size-popup">
             <button class="font-size-btn decrease-font">−</button>
             <input type="number" class="font-size-input" min="8" max="24" value="${fontSize}">
             <button class="font-size-btn increase-font">+</button>
           </div>
         </div>
-        <button class="action-btn delete-btn" title="Delete Note">🗑</button>
+        ${existingNoteData ? '<button class="action-btn lock-btn" title="Lock/Unlock Note">⚪</button>' : ''}
+        <button class="action-btn delete-btn" title="Delete Note">×</button>
       </div>
     </div>
     <div class="note-resize-handle"></div>
@@ -1723,44 +2212,84 @@ function createStickyNote(content: string = "", existingNoteData: any = null) {
 
   // Apply theme-specific styling
   if (currentTheme.id === 'autumn') {
-    note.style.border = '2px solid rgba(220, 38, 38, 0.3)';
-    note.style.color = '#451a03';
-    note.style.boxShadow = '0 8px 25px rgba(69, 26, 3, 0.2)';
+    // Simple autumn theme - like default but with autumn colors
+    note.style.borderRadius = '8px'; // Same as default
+    note.style.border = '2px solid rgba(139, 69, 19, 0.3)';
+    note.style.color = '#8B4513';
+    note.style.boxShadow = '0 4px 12px rgba(139, 69, 19, 0.15), 0 1px 4px rgba(139, 69, 19, 0.1)';
     
-    // Update toolbar for autumn theme
+    // Single autumn background color - simple like default
+    note.style.background = 'rgba(255, 228, 196, 0.95)'; // Single warm autumn color for all notes
+    
+    // Add falling leaves background
+    createNoteLeavesBackground(note);
+    
+    // Update toolbar for autumn theme - same as note background
     const toolbar = note.querySelector('.note-toolbar') as HTMLElement;
     if (toolbar) {
-      toolbar.style.background = 'rgba(69, 26, 3, 0.8)';
+      toolbar.style.background = 'rgba(255, 228, 196, 0.95)'; // Same as note background
+      toolbar.style.position = 'relative';
+      toolbar.style.zIndex = '2';
       
       const buttons = toolbar.querySelectorAll('button');
       buttons.forEach(button => {
         const btnElement = button as HTMLElement;
-        btnElement.style.color = '#fef3c7';
-        btnElement.style.background = 'rgba(220, 38, 38, 0.8)';
+        btnElement.style.color = '#8B4513';
+        btnElement.style.background = 'rgba(235, 208, 176, 0.8)'; // Darker than toolbar
+        btnElement.style.border = '1px solid rgba(139, 69, 19, 0.3)';
       });
     }
     
-    // Update textarea for autumn theme
+    // Update textarea for autumn theme - keep same as note background
     const textarea = note.querySelector('textarea') as HTMLElement;
     if (textarea) {
-      textarea.style.color = '#451a03';
-      textarea.style.background = 'rgba(255, 255, 255, 0.9)';
+      textarea.style.color = '#8B4513';
+      textarea.style.background = 'transparent'; // Use note background
+      textarea.style.position = 'relative';
+      textarea.style.zIndex = '2';
+    }
+    
+    // Update header for autumn theme - slightly darker than background
+    const header = note.querySelector('.sticky-note-header') as HTMLElement;
+    if (header) {
+      header.style.background = 'rgba(245, 218, 186, 0.95)'; // Same as toolbar
+      header.style.position = 'relative';
+      header.style.zIndex = '2';
+      
+      // Update header buttons to be darker than header
+      const headerButtons = header.querySelectorAll('button');
+      headerButtons.forEach(button => {
+        const btnElement = button as HTMLElement;
+        btnElement.style.color = '#8B4513';
+        btnElement.style.background = 'rgba(235, 208, 176, 0.8)'; // Darker than header
+        btnElement.style.border = '1px solid rgba(139, 69, 19, 0.3)';
+      });
     }
   }
 
-  // Position the note
+  // Position the note with improved fixed positioning
+  note.style.position = 'fixed';
+  note.style.zIndex = '1000000';
+  
   if (position) {
-    note.style.left = position.x + "px";
-    note.style.top = position.y + "px";
+    // Use stored position, but ensure it's within viewport bounds
+    const x = Math.max(20, Math.min(position.x, window.innerWidth - 320));
+    const y = Math.max(20, Math.min(position.y, window.innerHeight - 200));
+    note.style.left = x + "px";
+    note.style.top = y + "px";
   } else {
     const widget = document.getElementById("sticky-note-widget");
     if (widget) {
       const widgetRect = widget.getBoundingClientRect();
-      note.style.left = Math.max(20, widgetRect.left - 320) + "px";
-      note.style.top = Math.max(20, widgetRect.top) + "px";
+      // Calculate position relative to viewport, not page scroll
+      const x = Math.max(20, Math.min(widgetRect.left - 320, window.innerWidth - 340));
+      const y = Math.max(20, Math.min(widgetRect.top, window.innerHeight - 220));
+      note.style.left = x + "px";
+      note.style.top = y + "px";
     } else {
-      note.style.left = "100px";
-      note.style.top = "100px";
+      // Default to center-ish position in viewport
+      note.style.left = Math.max(20, (window.innerWidth - 300) / 2) + "px";
+      note.style.top = Math.max(20, (window.innerHeight - 200) / 2) + "px";
     }
   }
 
@@ -1772,12 +2301,13 @@ function createStickyNote(content: string = "", existingNoteData: any = null) {
 
   setTimeout(() => note.classList.add("open"), 10);
 
-  // Set current session for new notes
+  // Set current session for new notes and increment counter
   if (!existingNoteData) {
     currentNoteSession = {
       element: note,
       id: noteId
     };
+    activeNewNotesCount++;
   }
 
   // Track open note
@@ -2018,7 +2548,16 @@ function setupStickyNoteEvents(note: HTMLElement, noteId: string) {
       saveNoteData();
     }
     
-    // Keep session active - don't clear currentNoteSession for new notes
+    // Decrement counter for new notes
+    if (isNewNote) {
+      activeNewNotesCount = Math.max(0, activeNewNotesCount - 1);
+    }
+    
+    // Clear session if this is the current note
+    if (currentNoteSession && currentNoteSession.id === noteId) {
+      currentNoteSession = null;
+    }
+    
     note.classList.remove("open");
     setTimeout(() => note.remove(), 300);
   });
@@ -2129,6 +2668,12 @@ function setupStickyNoteEvents(note: HTMLElement, noteId: string) {
     if (confirm("Delete this note?")) {
       // Remove from tracking
       openNotesList.delete(noteId);
+      
+      // Decrement counter for new notes
+      if (isNewNote) {
+        activeNewNotesCount = Math.max(0, activeNewNotesCount - 1);
+      }
+      
       // Clear session if this is the current note
       if (currentNoteSession && currentNoteSession.id === noteId) {
         currentNoteSession = null;
@@ -2143,6 +2688,77 @@ function setupStickyNoteEvents(note: HTMLElement, noteId: string) {
       setTimeout(() => note.remove(), 200);
     }
   });
+
+  // Toolbar toggle functionality
+  toolbarToggleBtn?.addEventListener("click", () => {
+    const toolbar = note.querySelector(".note-toolbar") as HTMLElement;
+    const isCollapsed = toolbar.classList.contains("collapsed");
+    
+    if (isCollapsed) {
+      toolbar.classList.remove("collapsed");
+      toolbarToggleBtn.textContent = "‹";
+      toolbarToggleBtn.title = "Hide toolbar";
+    } else {
+      toolbar.classList.add("collapsed");
+      toolbarToggleBtn.textContent = "›";
+      toolbarToggleBtn.title = "Show toolbar";
+    }
+  });
+
+  // Minimize functionality - fold into header
+  minimizeBtn?.addEventListener("click", () => {
+    const minBtn = minimizeBtn as HTMLButtonElement;
+    if (isMinimized) {
+      // Restore
+      note.style.height = noteData.size.height + "px";
+      textarea.style.display = "block";
+      controlsBottom.style.display = "block";
+      resizeHandle.style.display = "block";
+      minBtn.textContent = "−";
+      minBtn.title = "Minimize";
+      isMinimized = false;
+    } else {
+      // Minimize to header only
+      noteData.size = { width: note.offsetWidth, height: note.offsetHeight };
+      note.style.height = "36px";
+      textarea.style.display = "none";
+      controlsBottom.style.display = "none";
+      resizeHandle.style.display = "none";
+      minBtn.textContent = "+";
+      minBtn.title = "Restore";
+      isMinimized = true;
+    }
+  });
+
+  // Lock button for existing notes
+  const lockBtn = note.querySelector(".lock-btn") as HTMLButtonElement;
+  if (lockBtn) {
+    lockBtn.addEventListener("click", () => {
+      if (isReadOnly) {
+        textarea.readOnly = false;
+        textarea.style.cursor = "text";
+        lockBtn.textContent = "⚪";
+        lockBtn.title = "Lock Note";
+        isReadOnly = false;
+      } else {
+        textarea.readOnly = true;
+        textarea.style.cursor = "default";
+        lockBtn.textContent = "⚫";
+        lockBtn.title = "Unlock Note";
+        isReadOnly = true;
+      }
+    });
+  }
+
+  // Highlight effect when opening existing note
+  if (!isNewNote) {
+    note.style.border = "3px solid rgba(255, 255, 255, 0.8)";
+    note.style.transform = "scale(1.05)";
+    setTimeout(() => {
+      note.style.border = "";
+      note.style.transform = "";
+    }, 800);
+  }
 
   // Improved auto-save functionality to prevent duplicate notes
   let saveTimeout: NodeJS.Timeout;
@@ -2207,6 +2823,11 @@ function toggleNotesPanel() {
     `;
     document.body.appendChild(notesPanel);
     refreshNotesList();
+    
+    // Apply current theme to the notes panel
+    setTimeout(() => {
+      applyThemeToWidgetAndPanels(currentTheme.id);
+    }, 50);
 
     // Add close button functionality
     const closeBtn = notesPanel.querySelector(".panel-close-btn");
@@ -2516,85 +3137,17 @@ function openNoteForEditing(note: any) {
   // Use the unified createStickyNote function with existing note data
   const stickyNote = createStickyNote(note.content, note);
   
+  if (!stickyNote) {
+    console.log("StickyNoteAI: Cannot open note");
+    return;
+  }
+  
   // Add the existing note ID to the sticky note for updating
   stickyNote.dataset.noteId = note.id;
   
-  // Add read-only button for edited notes
-  const toolbar = stickyNote.querySelector(".note-toolbar") as HTMLElement;
-  const readOnlyBtn = document.createElement("button");
-  readOnlyBtn.className = "action-btn read-only-btn";
-  readOnlyBtn.title = "Lock/Unlock Note";
-  readOnlyBtn.innerHTML = "🔒"; // Lock icon
-  
-  // Insert read-only button before delete button
-  const deleteBtn = stickyNote.querySelector(".delete-btn");
-  if (deleteBtn && toolbar) {
-    toolbar.insertBefore(readOnlyBtn, deleteBtn);
-  }
+  // The lock button is already handled in the HTML template and setupStickyNoteEvents
 
-  // Handle read-only toggle
-  const editTextarea = stickyNote.querySelector(".sticky-note-textarea") as HTMLTextAreaElement;
-  let isReadOnly = false;
-  
-  readOnlyBtn.addEventListener("click", () => {
-    isReadOnly = !isReadOnly;
-    editTextarea.readOnly = isReadOnly;
-    
-    if (isReadOnly) {
-      readOnlyBtn.classList.add("active");
-      readOnlyBtn.innerHTML = "🔓"; // Unlock icon
-      readOnlyBtn.title = "Enable Editing";
-      editTextarea.style.opacity = "0.7";
-      editTextarea.style.cursor = "default";
-    } else {
-      readOnlyBtn.classList.remove("active");
-      readOnlyBtn.innerHTML = "🔒"; // Lock icon
-      readOnlyBtn.title = "Lock Note";
-      editTextarea.style.opacity = "1";
-      editTextarea.style.cursor = "text";
-    }
-  });
-
-  // Update delete button functionality
-  if (deleteBtn) {
-    const newDeleteBtn = deleteBtn.cloneNode(true);
-    deleteBtn.parentNode?.replaceChild(newDeleteBtn, deleteBtn);
-    
-    newDeleteBtn.addEventListener("click", async () => {
-      if (isReadOnly) {
-        alert("Cannot delete note in read-only mode. Click the lock icon to enable editing.");
-        return;
-      }
-      
-      if (confirm("Delete this note?")) {
-        // Delete from storage (this will also refresh the notes list)
-        await deleteNote(note.id);
-        // Remove from tracking
-        openNotesList.delete(note.id);
-        // Clear current session if this note is deleted
-        if (currentNoteSession && currentNoteSession.id === note.id) {
-          currentNoteSession = null;
-        }
-        stickyNote.classList.remove("open");
-        setTimeout(() => stickyNote.remove(), 200);
-      }
-    });
-  }
-  
-  // Auto-save functionality for existing notes
-  let saveTimeout: any;
-  editTextarea.addEventListener("input", () => {
-    if (!isReadOnly) {
-      clearTimeout(saveTimeout);
-      saveTimeout = setTimeout(async () => {
-        const content = editTextarea.value.trim();
-        if (content && note.id) {
-          await updateNote(note.id, content);
-          refreshNotesList();
-        }
-      }, 1000);
-    }
-  });
+  // All functionality handled by setupStickyNoteEvents function
 }
 
 async function updateNote(noteId: string, newContent: string) {
@@ -2725,54 +3278,152 @@ function setupMessageListener() {
   function applyThemeToNotes(themeId: string, theme: any) {
     console.log("StickyNoteAI: Applying theme:", themeId);
     
-    // Apply theme to all existing sticky notes
-    const notes = document.querySelectorAll('.sticky-note');
-    notes.forEach((note, index) => {
-      const noteElement = note as HTMLElement;
-      
-      if (themeId === 'default') {
-        // Reset to default colors
-        noteElement.style.removeProperty('background');
-        noteElement.style.removeProperty('border');
-        noteElement.style.removeProperty('color');
-      } else if (theme && theme.colors) {
-        // Apply theme colors
-        const colorIndex = index % theme.colors.noteColors.length;
-        noteElement.style.background = theme.colors.noteColors[colorIndex];
+  // Apply theme to all existing sticky notes
+  const notes = document.querySelectorAll('.sticky-note');
+  notes.forEach((note, index) => {
+    const noteElement = note as HTMLElement;
+    
+    if (themeId === 'default') {
+      // Reset to default colors and remove leaves
+      noteElement.style.removeProperty('background');
+      noteElement.style.removeProperty('border');
+      noteElement.style.removeProperty('color');
+      // Remove leaves background
+      const leavesBackground = noteElement.querySelector('.note-leaves-background');
+      if (leavesBackground) {
+        leavesBackground.remove();
+      }
+    } else if (theme && theme.colors) {
+      // Apply autumn theme specific styling
+      if (themeId === 'autumn') {
+        // Single autumn color for all existing notes
+        noteElement.style.background = 'rgba(255, 228, 196, 0.95)';
+        noteElement.style.border = '2px solid rgba(139, 69, 19, 0.3)';
+        noteElement.style.color = '#8b4513';
+        noteElement.style.boxShadow = '0 4px 12px rgba(139, 69, 19, 0.15), 0 1px 4px rgba(139, 69, 19, 0.1)';
         
-        // Apply autumn theme specific styling
-        if (themeId === 'autumn') {
-          noteElement.style.border = '2px solid rgba(220, 38, 38, 0.3)';
-          noteElement.style.color = '#451a03';
-          noteElement.style.boxShadow = '0 8px 25px rgba(69, 26, 3, 0.2)';
+        // Add falling leaves background to existing notes
+        createNoteLeavesBackground(noteElement);
+        
+        // Update toolbar for autumn theme - same as note background
+        const toolbar = noteElement.querySelector('.note-toolbar');
+        if (toolbar) {
+          const toolbarElement = toolbar as HTMLElement;
+          toolbarElement.style.background = 'rgba(255, 228, 196, 0.95)';
+          toolbarElement.style.position = 'relative';
+          toolbarElement.style.zIndex = '2';
           
-          // Update toolbar buttons for autumn theme
-          const toolbar = noteElement.querySelector('.note-toolbar');
-          if (toolbar) {
-            const toolbarElement = toolbar as HTMLElement;
-            toolbarElement.style.background = 'rgba(69, 26, 3, 0.8)';
-            
-            const buttons = toolbar.querySelectorAll('button');
-            buttons.forEach(button => {
-              const btnElement = button as HTMLElement;
-              btnElement.style.color = '#fef3c7';
-              btnElement.style.background = 'rgba(220, 38, 38, 0.8)';
-            });
-          }
+          const buttons = toolbar.querySelectorAll('button');
+          buttons.forEach(button => {
+            const btnElement = button as HTMLElement;
+            btnElement.style.color = '#8b4513';
+            btnElement.style.background = 'rgba(235, 208, 176, 0.8)';
+            btnElement.style.border = '1px solid rgba(139, 69, 19, 0.3)';
+          });
+        }
+        
+        // Update textarea for autumn theme - transparent to use note background
+        const textarea = noteElement.querySelector('textarea');
+        if (textarea) {
+          const textareaElement = textarea as HTMLElement;
+          textareaElement.style.color = '#8b4513';
+          textareaElement.style.background = 'transparent';
+          textareaElement.style.position = 'relative';
+          textareaElement.style.zIndex = '2';
+        }
+        
+        // Update header for autumn theme - slightly darker than background
+        const header = noteElement.querySelector('.sticky-note-header');
+        if (header) {
+          const headerElement = header as HTMLElement;
+          headerElement.style.background = 'rgba(245, 218, 186, 0.95)';
+          headerElement.style.position = 'relative';
+          headerElement.style.zIndex = '2';
           
-          // Update textarea for autumn theme
-          const textarea = noteElement.querySelector('textarea');
-          if (textarea) {
-            const textareaElement = textarea as HTMLElement;
-            textareaElement.style.color = '#451a03';
-            textareaElement.style.background = 'rgba(255, 255, 255, 0.9)';
-          }
+          // Update header buttons
+          const headerButtons = header.querySelectorAll('button');
+          headerButtons.forEach(button => {
+            const btnElement = button as HTMLElement;
+            btnElement.style.color = '#8b4513';
+            btnElement.style.background = 'rgba(235, 208, 176, 0.8)';
+            btnElement.style.border = '1px solid rgba(139, 69, 19, 0.3)';
+          });
         }
       }
-    });
+    }
+  });
+  
+  // Apply theme to widget and recent notes panel
+  const widget = document.getElementById('sticky-note-widget');
+  const notesPanel = document.querySelector('.notes-panel') as HTMLElement;
+  
+  if (themeId === 'autumn') {
+    // Add autumn theme to widget
+    if (widget) {
+      widget.style.background = 'linear-gradient(145deg, rgba(255, 248, 220, 0.95), rgba(245, 222, 179, 0.9))';
+      widget.style.border = '2px solid rgba(139, 69, 19, 0.4)';
+      widget.style.color = '#8B4513';
+      createAreaLeavesBackground(widget, 'widget');
+    }
     
-    // Store current theme for new notes
+    // Add autumn theme to recent notes panel
+    if (notesPanel) {
+      notesPanel.style.background = 'linear-gradient(145deg, rgba(255, 248, 220, 0.95), rgba(245, 222, 179, 0.9))';
+      notesPanel.style.border = '2px solid rgba(139, 69, 19, 0.4)';
+      notesPanel.style.color = '#8B4513';
+      createAreaLeavesBackground(notesPanel, 'panel');
+      
+      // Update panel content styling
+      const panelTitle = notesPanel.querySelector('h3');
+      if (panelTitle) {
+        (panelTitle as HTMLElement).style.color = '#8B4513';
+      }
+      
+      const noteItems = notesPanel.querySelectorAll('.recent-note-item');
+      noteItems.forEach(item => {
+        const itemElement = item as HTMLElement;
+        itemElement.style.background = 'rgba(255, 228, 196, 0.8)';
+        itemElement.style.border = '1px solid rgba(139, 69, 19, 0.3)';
+        itemElement.style.color = '#8B4513';
+      });
+    }
+  } else {
+    // Reset to default theme
+    if (widget) {
+      widget.style.removeProperty('background');
+      widget.style.removeProperty('border');
+      widget.style.removeProperty('color');
+      // Remove leaves
+      const leavesBackground = widget.querySelector('.area-leaves-background');
+      if (leavesBackground) leavesBackground.remove();
+    }
+    
+    if (notesPanel) {
+      notesPanel.style.removeProperty('background');
+      notesPanel.style.removeProperty('border');
+      notesPanel.style.removeProperty('color');
+      // Remove leaves
+      const leavesBackground = notesPanel.querySelector('.area-leaves-background');
+      if (leavesBackground) leavesBackground.remove();
+      
+      // Reset panel content styling
+      const panelTitle = notesPanel.querySelector('h3');
+      if (panelTitle) {
+        (panelTitle as HTMLElement).style.removeProperty('color');
+      }
+      
+      const noteItems = notesPanel.querySelectorAll('.recent-note-item');
+      noteItems.forEach(item => {
+        const itemElement = item as HTMLElement;
+        itemElement.style.removeProperty('background');
+        itemElement.style.removeProperty('border');
+        itemElement.style.removeProperty('color');
+      });
+    }
+  }    // Store current theme for new notes
     currentTheme = { id: themeId, data: theme };
+    
+    // Falling leaves animation handled in popup only
   }
 
   browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
